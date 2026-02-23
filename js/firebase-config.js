@@ -17,7 +17,13 @@ if (typeof firebase !== 'undefined') {
     window.auth = firebase.auth();
     window.storage = typeof firebase.storage === 'function' ? firebase.storage() : null;
 
-    // ATIVAÇÃO DO MODO OFFLINE ÚNICA E CORRETA
+    // --- TURBO PARA IPHONE E CONEXÃO LENTA ---
+    firebase.firestore().settings({
+        experimentalForceLongPolling: true, // Evita que o 4G/Safari trave a conexão
+        cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED // Melhora o acesso offline em Magé
+    });
+
+    // ATIVAÇÃO DO MODO OFFLINE
     window.db.enablePersistence({ synchronizeTabs: true })
         .then(() => console.log("✅ Happy Pet Online e Offline!"))
         .catch((err) => {
@@ -32,3 +38,4 @@ if (typeof firebase !== 'undefined') {
 } else {
     console.error("Firebase não carregado. Verifique os scripts no HTML.");
 }
+
