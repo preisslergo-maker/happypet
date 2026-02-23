@@ -225,40 +225,46 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="js/firebase-config.js"></script>
     <script>
-        // 1. ARRUMA A TELA INSTANTANEAMENTE (Para não parecer que está travado)
-        window.onload = () => {
+        // 1. GARANTE QUE A TELA EXISTE ANTES DE TUDO
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // Passo A: Preenche a data de hoje imediatamente
             const dataHoje = new Date();
             const offset = dataHoje.getTimezoneOffset();
             const hojeFmt = new Date(dataHoje.getTime() - (offset*60*1000)).toISOString().split('T')[0];
             
             const inputFiltro = document.getElementById('filtroData');
-            if(inputFiltro && !inputFiltro.value) {
+            if(inputFiltro) {
                 inputFiltro.value = hojeFmt;
             }
-        };
 
-        // 2. ESCUDO E BUSCA SEGURA (Só busca quando tem certeza do login)
-        firebase.auth().onAuthStateChanged((user) => {
-            if (user) {
-                // Agora que o Firebase confirmou que ela tá logada, liberamos a busca!
-                carregarAgenda();
-            } else {
-                window.location.href = 'index.html';
-            }
+            // Passo B: Só AGORA que a data existe, ele verifica o login e busca!
+            firebase.auth().onAuthStateChanged((user) => {
+                if (user) {
+                    carregarAgenda();
+                } else {
+                    window.location.href = 'index.html';
+                }
+            });
         });
 
-        // 3. A BUSCA DOS DADOS (O resto continua igual)
+        // 2. A BUSCA DOS DADOS
         async function carregarAgenda() {
             const dataSel = document.getElementById('filtroData').value;
             const container = document.getElementById('listaAgenda');
             
             if (!window.db) {
-                console.error("Firebase db não está disponível.");
-                container.innerHTML = "<p style='text-align:center; color:red;'>Erro na inicialização do banco.</p>";
+                container.innerHTML = "<p style='text-align:center; color:red;'>Erro: Banco desconectado.</p>";
                 return;
             }
 
-            container.innerHTML = "<p style='text-align:center; color:var(--text-muted); margin-top:20px;'>Buscando atendimentos...</p>";
+            // Se por acaso a data estiver vazia, ele avisa e para, em vez de travar
+            if (!dataSel) {
+                container.innerHTML = "<p style='text-align:center; color:red;'>Selecione uma data válida.</p>";
+                return;
+            }
+
+            container.innerHTML = "<p style='text-align:center; color:var(--text-muted); margin-top:20px;'><i class='fas fa-spinner fa-spin'></i> Buscando atendimentos...</p>";
 
             try {
                 const [snap1, snap2] = await Promise.all([
@@ -327,8 +333,8 @@
                 });
 
             } catch (e) {
-                console.error(e);
-                container.innerHTML = "<p style='text-align:center; color:red;'>Erro ao carregar agenda.</p>";
+                console.error("Erro no catch:", e);
+                container.innerHTML = `<p style='text-align:center; color:red;'>Erro ao carregar agenda. Verifique o console.</p>`;
             }
         }
 
@@ -351,11 +357,6 @@
                 alert("Erro ao excluir.");
             }
         }
-    </script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js');
-      }
     </script>
 </body>
 </html>
