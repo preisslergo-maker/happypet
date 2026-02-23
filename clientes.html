@@ -263,28 +263,78 @@
         function fecharBusca() { document.getElementById("modalBusca").classList.remove("active"); }
 
         async function filtrarClientes() {
-            const termo = document.getElementById("inputBusca").value.toLowerCase();
-            if(termo.length < 3) return;
-            const res = document.getElementById("listaResultadosBusca");
-            res.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>Buscando...</p>";
+            const termo = document.getElementById("inputBusca").value.toLowerCase().trim();
+            if(termo.length < 2) {
+                document.getElementById("listaResultadosBusca").innerHTML = "<p style='text-align: center; color: var(--text-muted);'>Digite pelo menos 2 letras...</p>";
+                return;
+            }
             
-            const snap = await db.collection("clientes").get();
-            res.innerHTML = "";
+            const res = document.getElementById("listaResultadosBusca");
+            res.innerHTML = "<p style='text-align:center; color:var(--text-muted);'><i class='fas fa-spinner fa-spin'></i> Pesquisando...</p>";
+            
+            try {
+                // Busca otimizada: Procura tutores que o nome começa com o termo ou CPF
+                // Nota: Usamos o 'nome_busca' que salvamos no cadastro!
+                const snapTutores = await db.collection("clientes")
+                                        .where("nome_busca", ">=", termo)
+                                        .where("nome_busca", "<=", termo + "\uf8ff")
+                                        .limit(10)
+                                        .get();
 
-            snap.forEach(async (docTutor) => {
-                const tutor = docTutor.data();
-                if (tutor.nome.toLowerCase().includes(termo) || (tutor.cpf && tutor.cpf.includes(termo))) {
-                    const pSnap = await db.collection("clientes").doc(docTutor.id).collection("pets").get();
-                    pSnap.forEach(docPet => {
-                        const pet = docPet.data();
-                        const div = document.createElement("div");
-                        div.className = "item-busca-p";
-                        div.onclick = () => window.location.href = `perfil_cliente.html?tutorId=${docTutor.id}`;
-                        div.innerHTML = `<strong style="color:var(--primary);">${pet.nome}</strong><br><small>Tutor: ${tutor.nome}</small>`;
-                        res.appendChild(div);
+                let resultadosEncontrados = 0;
+                res.innerHTML = "";
+
+                // Se não achou tutores, vamos tentar uma busca geral (mais lenta, mas garante o resultado)
+                if (snapTutores.empty) {
+                    // Busca alternativa por CPF ou varredura simples
+                    const snapGeral = await db.collection("clientes").get();
+                    snapGeral.forEach(docTutor => {
+                        const tutor = docTutor.data();
+                        if (tutor.nome.toLowerCase().includes(termo) || (tutor.cpf && tutor.cpf.includes(termo))) {
+                            renderizarItemBusca(docTutor, res);
+                            resultadosEncontrados++;
+                        }
+                    });
+                } else {
+                    snapTutores.forEach(docTutor => {
+                        renderizarItemBusca(docTutor, res);
+                        resultadosEncontrados++;
                     });
                 }
-            });
+
+                if(resultadosEncontrados === 0) {
+                    res.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>Nenhum cliente encontrado.</p>";
+                }
+
+            } catch (err) {
+                console.error("Erro na busca:", err);
+                res.innerHTML = "<p style='text-align:center; color:red;'>Erro ao buscar.</p>";
+            }
+        }
+
+        // Função auxiliar para não repetir código
+        async function renderizarItemBusca(docTutor, container) {
+            const tutor = docTutor.data();
+            const pSnap = await db.collection("clientes").doc(docTutor.id).collection("pets").get();
+            
+            let nomesPets = [];
+            pSnap.forEach(p => nomesPets.push(p.data().nome));
+            const strPets = nomesPets.length > 0 ? nomesPets.join(", ") : "Nenhum pet cadastrado";
+
+            const div = document.createElement("div");
+            div.className = "item-busca-p";
+            div.style.cursor = "pointer";
+            div.onclick = () => window.location.href = `perfil_cliente.html?tutorId=${docTutor.id}`;
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <strong style="color:var(--primary); font-size:1.1rem;">${tutor.nome}</strong><br>
+                        <small style="color:var(--text-muted); font-weight:600;">Pets: ${strPets}</small>
+                    </div>
+                    <i class="fas fa-chevron-right" style="color:#DDD"></i>
+                </div>
+            `;
+            container.appendChild(div);
         }
     </script>
 </body>
