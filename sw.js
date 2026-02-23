@@ -1,4 +1,4 @@
-const CACHE_NAME = 'happypet-v3'; // Mudei para v2 para o iPhone entender que é novo
+const CACHE_NAME = 'happypet-v4'; // Mudei para v2 para o iPhone entender que é novo
 
 const ASSETS = [
   './',
