@@ -185,20 +185,40 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="js/firebase-config.js"></script>
 
-    <script>
+<script>
+        // 1. CARREGAMENTO INSTANTÂNEO (Puxa da memória do iPhone na hora)
+        window.onload = () => {
+            const nomeSalvo = localStorage.getItem('nomeDra');
+            if (nomeSalvo) {
+                document.getElementById('msgBoasVindas').innerText = `Oi, ${nomeSalvo}! 👋`;
+            } else {
+                document.getElementById('msgBoasVindas').innerText = `Oi, Natália! 👋`; // Fallback para não ficar vazio
+            }
+        };
+
+        // 2. ESCUDO INVISÍVEL E ATUALIZAÇÃO NO FUNDO
         firebase.auth().onAuthStateChanged(async (user) => {
-            if (!user) { window.location.href = 'index.html'; return; }
+            if (!user) { 
+                window.location.href = 'index.html'; 
+                return; 
+            }
+            
+            // Só vai no banco para garantir que o nome tá atualizado
             try {
                 const doc = await db.collection('usuarios').doc(user.uid).get();
                 if(doc.exists) {
                     const nomeCompleto = doc.data().nome || "Natália";
-                    document.getElementById('msgBoasVindas').innerText = `Oi, ${nomeCompleto.split(' ')[0]}! 👋`;
+                    const primeiroNome = nomeCompleto.split(' ')[0];
+                    
+                    document.getElementById('msgBoasVindas').innerText = `Oi, ${primeiroNome}! 👋`;
+                    localStorage.setItem('nomeDra', primeiroNome); // Guarda no celular para a próxima vez ser vapt-vupt
                 }
             } catch(e) { console.error(e); }
         });
 
         function fazerLogout() {
             if(confirm("Deseja fechar o sistema?")) {
+                localStorage.removeItem('nomeDra'); // Limpa a memória ao sair
                 firebase.auth().signOut().then(() => { window.location.href = 'index.html'; });
             }
         }
