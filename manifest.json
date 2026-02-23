@@ -1,14 +1,22 @@
 {
-  "name": "Dra Natalia Monteiro",
-  "short_name": "Dra Natalia Monteiro",
-  "start_url": "index.html",
+  "name": "Dra. Natalia Monteiro - Sistema",
+  "short_name": "Dra.Natalia Moneteiro",
+  "description": "Sistema de Atendimento Veterinário Domiciliar",
+  "start_url": "./index.html",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#F7F9FC",
   "theme_color": "#4ECDC4",
   "icons": [
     {
       "src": "assets/icon-192.png",
       "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "512x512",
       "type": "image/png"
     }
   ]
