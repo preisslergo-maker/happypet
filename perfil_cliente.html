@@ -20,6 +20,7 @@
             --text-main: #2D3436;
             --text-muted: #636e72;
             --whatsapp: #25D366;
+            --success: #34C759;
         }
 
         body { 
@@ -30,7 +31,6 @@
             padding-bottom: 40px;
         }
 
-        /* Top Bar Padrão */
         .top-bar-app {
             background: linear-gradient(135deg, var(--primary), #45b7af);
             padding: 30px 25px 20px 25px;
@@ -56,7 +56,6 @@
 
         .container-perfil { padding: 20px; }
 
-        /* Alerta de Pendência Estilizado */
         .pendencia-box-premium { 
             background: #FFF1F0; 
             border: 2px solid #FFA39E; 
@@ -67,13 +66,25 @@
             margin-bottom: 20px; 
             text-align: center; 
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             gap: 10px;
             box-shadow: 0 4px 12px rgba(255, 107, 107, 0.1);
         }
 
-        /* Card de Informações */
+        .btn-pagar-pendencia {
+            background: #CF1322;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            margin-top: 5px;
+            width: 100%;
+        }
+
         .card-perfil-premium { 
             background: white; 
             border-radius: 25px; 
@@ -107,7 +118,6 @@
         }
         .input-premium:focus { border-bottom-color: var(--primary); }
 
-        /* Botões */
         .btn-zap-premium { 
             background: var(--whatsapp); 
             color: white; 
@@ -139,8 +149,7 @@
             box-shadow: 0 6px 20px rgba(78, 205, 196, 0.3);
         }
 
-        /* Seção de Pets */
-        .title-section-p { font-size: 1rem; font-weight: 900; margin: 30px 0 15px 5px; color: var(--text-main); }
+        .title-section-p { font-size: 1rem; font-weight: 900; margin: 0; color: var(--text-main); }
 
         .pet-card-p { 
             display: flex; 
@@ -157,6 +166,14 @@
         }
         .pet-card-p:active { transform: scale(0.97); }
         .pet-card-p i { font-size: 1.8rem; color: var(--primary); background: #E0F7F5; padding: 10px; border-radius: 12px; }
+
+        /* Estilos dos Modais (Pet e Pagamento) */
+        .modal-sheet { display:none; position:fixed; bottom:0; left:0; width:100%; background:white; border-radius:30px 30px 0 0; box-shadow:0 -10px 30px rgba(0,0,0,0.2); z-index:2000; padding:25px; box-sizing:border-box; overflow-y:auto; animation: slideSheet 0.4s cubic-bezier(0.25, 1, 0.5, 1); }
+        .modal-sheet.full { height: 90%; }
+        .modal-sheet.half { height: 65%; }
+        @keyframes slideSheet { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .modal-input { width:100%; border:1px solid #EEE; border-radius:12px; padding:15px; font-family:inherit; margin-bottom:12px; background:#F9F9F9; outline:none; font-size:1rem; box-sizing: border-box; }
+        .btn-add-pet { background: #E0F7F5; color: var(--primary); border: none; padding: 10px 15px; border-radius: 12px; font-weight: 800; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 8px; }
         
     </style>
 </head>
@@ -164,7 +181,7 @@
 
     <header class="top-bar-app">
         <button class="btn-back-nav" onclick="history.back()"><i class="fas fa-chevron-left"></i></button>
-        <h1 style="margin:0; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.5px;">Dados do Cliente - Dra Natalia Monteiro</h1>
+        <h1 style="margin:0; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.5px;">Dados do Cliente</h1>
     </header>
 
     <main class="container-perfil">
@@ -189,7 +206,11 @@
             <input type="text" id="pEndereco" class="input-premium">
         </div>
 
-        <h3 class="title-section-p"><i class="fas fa-paw" style="color: var(--primary);"></i> Pets Vinculados</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 30px 0 15px 5px;">
+            <h3 class="title-section-p"><i class="fas fa-paw" style="color: var(--primary);"></i> Pets Vinculados</h3>
+            <button class="btn-add-pet" onclick="abrirModalNovoPet()"><i class="fas fa-plus"></i> PET</button>
+        </div>
+
         <div id="listaPetsTutor">
             <p style="text-align: center; color: var(--text-muted); padding: 20px;">Carregando pacientes...</p>
         </div>
@@ -202,6 +223,99 @@
 
     </main>
 
+    <div id="modalPagamento" class="modal-sheet half">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h3 style="font-weight:900; margin:0;"><i class="fas fa-money-bill-wave"></i> Receber Pagamento</h3>
+            <button onclick="fecharModalPagamento()" style="background:none; border:none; color:var(--text-muted); font-weight:800; cursor:pointer;">FECHAR</button>
+        </div>
+        
+        <div style="background:#F0F0F0; padding:15px; border-radius:15px; margin-bottom:20px; text-align:center;">
+            <span style="display:block; font-size:0.8rem; color:var(--text-muted); font-weight:700;">DÍVIDA ATUAL</span>
+            <strong id="txtDividaAtualModal" style="font-size:1.8rem; color:#CF1322;">R$ 0,00</strong>
+        </div>
+
+        <label class="label-premium">Valor Pago Agora (R$)</label>
+        <input type="number" id="inputValorAbaixar" class="modal-input" placeholder="Ex: 50.00" step="0.01">
+
+        <label class="label-premium">Forma de Pagamento</label>
+        <select id="formaPagamentoModal" class="modal-input">
+            <option value="Pix">Pix</option>
+            <option value="Dinheiro">Dinheiro</option>
+            <option value="Cartão">Cartão</option>
+        </select>
+
+        <button onclick="salvarBaixaPagamento()" id="btnSalvarBaixa" style="width:100%; background:var(--success); color:white; border:none; padding:18px; border-radius:18px; font-weight:800; box-shadow: 0 6px 15px rgba(52, 199, 89, 0.3); cursor:pointer; margin-top:10px;">
+            CONFIRMAR RECEBIMENTO
+        </button>
+    </div>
+
+    <div id="modalNovoPet" class="modal-sheet full">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h3 style="font-weight:900; margin:0;"><i class="fas fa-paw"></i> Novo Pet</h3>
+            <button onclick="document.getElementById('modalNovoPet').style.display='none'" style="background:none; border:none; color:var(--text-muted); font-weight:800; cursor:pointer;">FECHAR</button>
+        </div>
+
+        <form id="formNovoPetConsulta">
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <div style="flex:1">
+                    <label class="label-premium">Nome do Pet *</label>
+                    <input type="text" id="petNomeNovo" class="modal-input" placeholder="Ex: Bob" required>
+                </div>
+                <div style="flex:1">
+                    <label class="label-premium">Espécie</label>
+                    <select id="petEspecieNovo" class="modal-input">
+                        <option value="canino">Cão</option>
+                        <option value="felino">Gato</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <div style="flex:1">
+                    <label class="label-premium">Raça</label>
+                    <input type="text" id="petRacaNovo" class="modal-input" placeholder="Raça">
+                </div>
+                <div style="flex:1">
+                    <label class="label-premium">Sexo</label>
+                    <select id="petSexoNovo" class="modal-input">
+                        <option value="macho">Macho</option>
+                        <option value="femea">Fêmea</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <div style="flex:1">
+                    <label class="label-premium">Nascimento</label>
+                    <input type="date" id="petNascimentoNovo" class="modal-input">
+                </div>
+                <div style="flex:1">
+                    <label class="label-premium">Castrado?</label>
+                    <select id="petCastradoNovo" class="modal-input">
+                        <option value="nao">Não</option>
+                        <option value="sim">Sim</option>
+                    </select>
+                </div>
+            </div>
+
+            <label class="label-premium">Comportamento</label>
+            <div style="display: flex; gap: 8px; margin-bottom: 25px; margin-top:5px;">
+                <label style="flex:1; text-align:center; cursor:pointer;">
+                    <input type="radio" name="compNovo" value="manso" checked style="display:none;"> 
+                    <span style="display:block; padding:12px; border-radius:12px; background:#34C759; color:white; font-size:0.75rem; font-weight:800;">MANSO</span>
+                </label>
+                <label style="flex:1; text-align:center; cursor:pointer;">
+                    <input type="radio" name="compNovo" value="bravo" style="display:none;"> 
+                    <span style="display:block; padding:12px; border-radius:12px; background:var(--secondary); color:white; font-size:0.75rem; font-weight:800;">BRAVO</span>
+                </label>
+            </div>
+
+            <button type="submit" id="btnSalvarPetNovo" style="width:100%; background:var(--primary); color:white; border:none; padding:18px; border-radius:18px; font-weight:800; box-shadow: 0 6px 15px rgba(78, 205, 196, 0.3); cursor:pointer;">
+                SALVAR PET
+            </button>
+        </form>
+    </div>
+
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
@@ -211,6 +325,8 @@
         /* global db */
         const params = new URLSearchParams(window.location.search);
         const tutorId = params.get("tutorId");
+        let dividaGlobal = 0; // Armazena a dívida para usar no Modal
+        let primeiroPetId = null; // Armazena o ID do primeiro pet para registrar o histórico financeiro
 
         window.onload = carregarPerfil;
 
@@ -230,39 +346,52 @@
                         document.getElementById("linkZap").href = `https://wa.me/55${telLimpo}?text=Olá! Aqui é a Dra. Natália Monteiro.`;
                     }
 
-                    if (tutor.total_pendencia > 0) {
-                        const box = document.getElementById("statusPendencia");
+                    dividaGlobal = tutor.total_pendencia || 0;
+                    const box = document.getElementById("statusPendencia");
+                    
+                    if (dividaGlobal > 0) {
                         box.style.display = "flex";
                         box.className = "pendencia-box-premium";
-                        box.innerHTML = `<i class="fas fa-hand-holding-usd"></i> PENDÊNCIA FINANCEIRA: R$ ${tutor.total_pendencia.toFixed(2)}`;
+                        box.innerHTML = `
+                            <div style="font-size:1.1rem;"><i class="fas fa-exclamation-triangle"></i> DÍVIDA: R$ ${dividaGlobal.toFixed(2)}</div>
+                            <button class="btn-pagar-pendencia" onclick="abrirModalPagamento()">BAIXAR PAGAMENTO</button>
+                        `;
+                    } else {
+                        box.style.display = "none";
                     }
                 }
 
                 // 2. Carregar Pets
-                const pSnap = await db.collection("clientes").doc(tutorId).collection("pets").get();
-                const containerPets = document.getElementById("listaPetsTutor");
-                containerPets.innerHTML = "";
-
-                if(pSnap.empty) {
-                    containerPets.innerHTML = "<p style='text-align:center; color:gray;'>Nenhum pet cadastrado.</p>";
-                }
-
-                pSnap.forEach(doc => {
-                    const pet = doc.data();
-                    const div = document.createElement("div");
-                    div.className = "pet-card-p";
-                    div.onclick = () => window.location.href = `consulta.html?petId=${doc.id}&tutorId=${tutorId}`;
-                    div.innerHTML = `
-                        <i class="fas fa-dog"></i>
-                        <div>
-                            <strong style="font-size:1.1rem; color:var(--text-main);">${pet.nome}</strong><br>
-                            <small style="color:var(--text-muted); font-weight:600; text-transform:uppercase;">${pet.raca || "SRD"} • ${pet.peso_atual || "--"}kg</small>
-                        </div>
-                    `;
-                    containerPets.appendChild(div);
-                });
+                carregarListaPets();
 
             } catch (e) { console.error(e); }
+        }
+
+        async function carregarListaPets() {
+            const pSnap = await db.collection("clientes").doc(tutorId).collection("pets").get();
+            const containerPets = document.getElementById("listaPetsTutor");
+            containerPets.innerHTML = "";
+
+            if(pSnap.empty) {
+                containerPets.innerHTML = "<p style='text-align:center; color:gray;'>Nenhum pet cadastrado.</p>";
+            }
+
+            pSnap.forEach((doc, index) => {
+                if(index === 0) primeiroPetId = doc.id; // Guarda para salvar no histórico
+
+                const pet = doc.data();
+                const div = document.createElement("div");
+                div.className = "pet-card-p";
+                div.onclick = () => window.location.href = `consulta.html?petId=${doc.id}&tutorId=${tutorId}`;
+                div.innerHTML = `
+                    <i class="fas fa-dog"></i>
+                    <div>
+                        <strong style="font-size:1.1rem; color:var(--text-main);">${pet.nome}</strong><br>
+                        <small style="color:var(--text-muted); font-weight:600; text-transform:uppercase;">${pet.raca || "SRD"} • ${pet.peso_atual || "--"}kg</small>
+                    </div>
+                `;
+                containerPets.appendChild(div);
+            });
         }
 
         async function atualizarDadosTutor() {
@@ -286,6 +415,108 @@
                 console.error(e);
             }
         }
+
+        // --- FUNÇÕES DE PAGAMENTO DE PENDÊNCIA ---
+        function abrirModalPagamento() {
+            document.getElementById('txtDividaAtualModal').innerText = "R$ " + dividaGlobal.toFixed(2);
+            document.getElementById('inputValorAbaixar').value = dividaGlobal.toFixed(2); // Sugere pagar tudo
+            document.getElementById('modalPagamento').style.display = 'block';
+        }
+
+        function fecharModalPagamento() {
+            document.getElementById('modalPagamento').style.display = 'none';
+        }
+
+        async function salvarBaixaPagamento() {
+            const valorPago = parseFloat(document.getElementById('inputValorAbaixar').value);
+            const formaPgto = document.getElementById('formaPagamentoModal').value;
+            const btn = document.getElementById('btnSalvarBaixa');
+
+            if (isNaN(valorPago) || valorPago <= 0) return alert("Digite um valor válido.");
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESSANDO...';
+
+            try {
+                const novaDivida = Math.max(0, dividaGlobal - valorPago); // Não deixa ficar negativo
+
+                // 1. Atualiza a dívida do Tutor
+                await db.collection("clientes").doc(tutorId).update({
+                    total_pendencia: novaDivida,
+                    ultima_atualizacao_financeira: new Date().toISOString()
+                });
+
+                // 2. Salva o Recibo na timeline do primeiro Pet (para não perder o histórico)
+                if (primeiroPetId) {
+                    await db.collection("clientes").doc(tutorId).collection("pets").doc(primeiroPetId).collection("historico").add({
+                        tipo: "recibo",
+                        data: new Date().toISOString(),
+                        descricao: `Pagamento de Pendência Antiga (${formaPgto})`,
+                        total: valorPago, // O "serviço" foi o valor que ele pagou
+                        valorPago: valorPago,
+                        pendencia: 0,
+                        status: "pago",
+                        pagamento: formaPgto
+                    });
+                }
+
+                alert("Pagamento registrado com sucesso!");
+                fecharModalPagamento();
+                carregarPerfil(); // Recarrega para sumir o box de dívida
+
+                btn.disabled = false;
+                btn.innerHTML = 'CONFIRMAR RECEBIMENTO';
+
+            } catch (e) {
+                console.error("Erro ao registrar pagamento:", e);
+                alert("Erro ao processar. Tente novamente.");
+                btn.disabled = false;
+                btn.innerHTML = 'CONFIRMAR RECEBIMENTO';
+            }
+        }
+
+        // --- FUNÇÕES DO NOVO PET ---
+        function abrirModalNovoPet() {
+            document.getElementById('modalNovoPet').style.display = 'block';
+        }
+
+        document.getElementById('formNovoPetConsulta').onsubmit = async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSalvarPetNovo');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> SALVANDO...';
+
+            const novoPet = {
+                nome: document.getElementById('petNomeNovo').value.trim(),
+                especie: document.getElementById('petEspecieNovo').value,
+                raca: document.getElementById('petRacaNovo').value || "SRD",
+                sexo: document.getElementById('petSexoNovo').value,
+                castrado: document.getElementById('petCastradoNovo').value === 'sim',
+                nascimento: document.getElementById('petNascimentoNovo').value,
+                comportamento: document.querySelector('input[name="compNovo"]:checked').value,
+                criadoEm: new Date().toISOString(),
+                peso_atual: ""
+            };
+
+            try {
+                await db.collection("clientes").doc(tutorId).collection("pets").add(novoPet);
+                
+                alert("🐾 " + novoPet.nome + " cadastrado com sucesso!");
+                document.getElementById('modalNovoPet').style.display = 'none';
+                document.getElementById('formNovoPetConsulta').reset();
+                
+                carregarListaPets();
+                
+                btn.disabled = false;
+                btn.innerText = "SALVAR PET";
+                
+            } catch (error) {
+                console.error("Erro ao salvar pet:", error);
+                alert("Erro ao salvar pet. Tente novamente.");
+                btn.disabled = false;
+                btn.innerText = "SALVAR PET";
+            }
+        };
     </script>
 </body>
 </html>
