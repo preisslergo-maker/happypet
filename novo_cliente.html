@@ -1,309 +1,321 @@
-/**
- * CONTROLLER - Novo Cadastro Happy Pet (Versão Final Destravada)
- */
-
-let tutorIdAtual = null;
-let listaVacinasTemp = [];
-let catalogoVacinasCache = [];
-
-const bancoRacas = {
-    canino: ["SRD", "Shih Tzu", "Yorkshire", "Poodle", "Golden Retriever", "Bulldog", "Pinscher", "Lhasa Apso", "Pitbull", "Maltês", "Pug", "Dachshund"],
-    felino: ["SRD", "Siamês", "Persa", "Maine Coon", "Angorá", "Ragdoll", "Bengal"]
-};
-
-document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Carrega vacinas do Firebase
-    await carregarCatalogoDoFirebase();
-    
-    // 2. Ativa os mecanismos
-    configurarCEP();
-    configurarEventosTutor();
-    configurarEventosPet();
-});
-
-// --- BUSCA DE CEP AUTOMÁTICA (Versão Corrigida para Callback/JSONP) ---
-function configurarCEP() {
-    const cepInput = document.getElementById('cliCep');
-    if(cepInput) {
-        cepInput.addEventListener('blur', (e) => {
-            const cep = e.target.value.replace(/\D/g, '');
-            if(cep.length !== 8) return;
-
-            const inputEnd = document.getElementById('cliEndereco');
-            const originalVal = inputEnd.value;
-            inputEnd.value = "Buscando endereço...";
-
-            // Chama o Utils usando Callback para pular o erro de CORS
-            Utils.consultarCEP(cep, (dados) => {
-                if(dados && !dados.erro) {
-                    inputEnd.value = `${dados.logradouro}, ${dados.bairro}, ${dados.localidade} - ${dados.uf}`;
-                    document.getElementById('cliNum').focus();
-                } else {
-                    inputEnd.value = originalVal;
-                    alert("CEP não encontrado ou erro na conexão.");
-                }
-            });
-        });
-    }
-}
-
-// --- ETAPA 1: LÓGICA DO TUTOR ---
-function configurarEventosTutor() {
-    const cpfInput = document.getElementById('cliCpf');
-    
-    if(cpfInput) {
-        cpfInput.addEventListener('blur', async (e) => {
-            const cpfLimpo = e.target.value.replace(/\D/g, '');
-            
-            // 1. Validação de formato/algoritmo
-            if (cpfLimpo.length > 0 && !Utils.validarCPF(cpfLimpo)) {
-                alert("⚠️ CPF Inválido! Por favor, verifique os números.");
-                e.target.style.borderColor = "red";
-                e.target.focus();
-                return;
-            } else {
-                e.target.style.borderColor = "#F0F0F0";
-            }
-
-            if(cpfLimpo.length !== 11) return;
-
-            // 2. Busca no Firebase (sempre usando o CPF limpo)
-            try {
-                const query = await db.collection('clientes').where('cpf', '==', cpfLimpo).get();
-                if(!query.empty) {
-                    const dadosTutor = query.docs[0].data();
-                    if(confirm(`Tutor já cadastrado: ${dadosTutor.nome}.\n\nDeseja carregar estes dados para adicionar mais um pet?`)) {
-                        tutorIdAtual = query.docs[0].id;
-                        preencherCamposTutor(dadosTutor);
-                        avancarParaPets();
-                    }
-                }
-            } catch (err) { console.error("Erro busca CPF:", err); }
-        });
-    }
-
-    document.getElementById('formTutor').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const btn = document.getElementById('btnSalvarTutor');
-        
-        const nomeDigitado = document.getElementById('cliNome').value.trim();
-        const telefoneMasc = document.getElementById('cliTel').value;
-        const telefoneLimpo = telefoneMasc.replace(/\D/g, ''); 
-        
-        const dados = {
-            nome: nomeDigitado,
-            nome_busca: nomeDigitado.toLowerCase(), 
-            cpf: document.getElementById('cliCpf').value.replace(/\D/g, ''),
-            telefone: telefoneLimpo,
-            telefoneFormatado: telefoneMasc,
-            cep: document.getElementById('cliCep').value.replace(/\D/g, ''),
-            endereco: document.getElementById('cliEndereco').value,
-            numero: document.getElementById('cliNum').value,
-            bairro: document.getElementById('cliEndereco').value.split(',')[1]?.trim() || 'N/I',
-            saldo_devedor: 0, 
-            criadoEm: new Date()
-        };
-
-        try {
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
-            
-            // Se já carregamos um ID pelo CPF, atualizamos. Se não, criamos novo.
-            if (tutorIdAtual) {
-                await db.collection('clientes').doc(tutorIdAtual).update(dados);
-            } else {
-                const docRef = await db.collection('clientes').add(dados);
-                tutorIdAtual = docRef.id;
-            }
-            
-            alert("✅ Tutor salvo com sucesso! Agora cadastre o Pet.");
-            btn.innerHTML = '<i class="fas fa-check"></i> SALVO';
-            avancarParaPets();
-        } catch (err) { 
-            console.error(err);
-            alert("Erro ao salvar: " + err.message); 
-            btn.disabled = false; 
-            btn.innerHTML = '<i class="fas fa-save"></i> TENTAR NOVAMENTE';
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Novo Cadastro - Dra. Natália Monteiro</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --primary: #4ECDC4;
+            --secondary: #FF6B6B;
+            --bg-app: #F7F9FC;
+            --card-white: #FFFFFF;
+            --text-main: #2D3436;
+            --text-muted: #636e72;
         }
-    });
-}
 
-// --- ETAPA 2: LÓGICA DO PET & VACINAS ---
-async function carregarCatalogoDoFirebase() {
-    try {
-        const snapshot = await db.collection('catalogo_vacinas').get();
-        if (!snapshot.empty) {
-            catalogoVacinasCache = snapshot.docs.map(doc => doc.data());
-        } else {
-            throw new Error("Coleção vazia");
+        body { 
+            font-family: 'Segoe UI', Roboto, sans-serif; 
+            background-color: var(--bg-app); 
+            margin: 0; 
+            color: var(--text-main);
         }
-    } catch (e) { 
-        catalogoVacinasCache = [
-            { nome: 'V10', especie: 'canino', dias_reforco: 365 },
-            { nome: 'Antirrábica', especie: 'ambos', dias_reforco: 365 },
-            { nome: 'V5 (Quíntupla Felina)', especie: 'felino', dias_reforco: 365 }
-        ];
-    }
-}
 
-function configurarEventosPet() {
-    const btnMostrarForm = document.getElementById('btnMostrarFormPet');
-    const formPet = document.getElementById('formPet');
-    const selEspecie = document.getElementById('petEspecie');
-    const selVacina = document.getElementById('selVacina');
-    const inputDataDose = document.getElementById('dataVac');
+        /* Top Bar Premium */
+        .top-bar-app {
+            background: linear-gradient(135deg, var(--primary), #45b7af);
+            padding: 30px 25px 20px 25px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-radius: 0 0 25px 25px;
+            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
 
-    if(btnMostrarForm) {
-        btnMostrarForm.addEventListener('click', () => {
-            formPet.style.display = 'block';
-            btnMostrarForm.style.display = 'none';
-        });
-    }
+        .btn-back-nav { 
+            background: rgba(255,255,255,0.2); 
+            border: none; color: white; 
+            width: 35px; height: 35px; 
+            border-radius: 10px; 
+            display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; 
+        }
 
-    selEspecie.addEventListener('change', (e) => {
-        const esp = e.target.value;
-        const dlRacas = document.getElementById('listaRacasSugestao');
-        dlRacas.innerHTML = (bancoRacas[esp] || []).map(r => `<option value="${r}">`).join('');
+        .container { padding: 20px; padding-bottom: 50px; }
 
-        selVacina.innerHTML = '<option value="">Selecione a vacina...</option>';
-        const vacinasFiltradas = catalogoVacinasCache.filter(v => v.especie === esp || v.especie === 'ambos');
+        /* Estilo dos Cards de Formulário */
+        .card-premium {
+            background: white;
+            border-radius: 25px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 25px rgba(149, 157, 165, 0.06);
+            border-top: 6px solid var(--primary);
+        }
+
+        .section-title-p {
+            font-size: 1rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .label-premium { 
+            font-size: 0.7rem; 
+            font-weight: 800; 
+            color: var(--primary); 
+            margin-bottom: 8px; 
+            display: block; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-premium { 
+            width: 100%; 
+            padding: 14px; 
+            margin-bottom: 15px; 
+            border: 1px solid #F0F0F0; 
+            border-radius: 15px; 
+            font-size: 1rem; 
+            box-sizing: border-box; 
+            background: #F9F9F9;
+            outline: none;
+            color: var(--text-main);
+            font-family: inherit;
+        }
+
+        .input-premium:focus { border-color: var(--primary); background: white; }
+
+        .row-app { display: flex; gap: 12px; }
+        .col-50 { flex: 1; }
+
+        /* Botões */
+        .btn-p-solid { 
+            width: 100%; 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 18px; 
+            border-radius: 18px; 
+            font-weight: 800; 
+            font-size: 1rem; 
+            cursor: pointer; 
+            box-shadow: 0 6px 20px rgba(78, 205, 196, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-p-outline {
+            width: 100%;
+            background: white;
+            color: var(--primary);
+            border: 2px dashed var(--primary);
+            padding: 15px;
+            border-radius: 18px;
+            font-weight: 800;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        /* Seção de Vacinas Interna */
+        .vacina-box {
+            background: #F0FBF9;
+            padding: 15px;
+            border-radius: 20px;
+            margin-top: 15px;
+            border: 1px solid #E0F2F1;
+        }
+
+        /* Comportamento Badges */
+        .behavior-selector { display: flex; gap: 8px; margin-top: 5px; margin-bottom: 15px; }
+        .badge-behavior { 
+            flex: 1; text-align: center; padding: 10px; border-radius: 12px; 
+            font-size: 0.75rem; font-weight: 800; color: white; opacity: 0.4; 
+        }
+        input[type="radio"]:checked + .badge-behavior { opacity: 1; transform: scale(1.05); }
+        .badge-green { background: #34C759; }
+        .badge-yellow { background: #FFCC00; }
+        .badge-red { background: #FF3B30; }
+
+    </style>
+</head>
+<body>
+
+    <header class="top-bar-app">
+        <button class="btn-back-nav" onclick="location.href='home.html'"><i class="fas fa-chevron-left"></i></button>
+        <h1 style="margin:0; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.5px;">Cadastrar Cliente - Dra Natalia Monteiro</h1>
+    </header>
+
+    <main class="container">
         
-        vacinasFiltradas.forEach(v => {
-            const opt = document.createElement('option');
-            opt.value = v.nome;
-            opt.dataset.reforco = v.dias_reforco || 365;
-            opt.textContent = v.nome;
-            selVacina.appendChild(opt);
-        });
-    });
-
-    const calcularRetorno = () => {
-        const selected = selVacina.options[selVacina.selectedIndex];
-        const dataDose = inputDataDose.value;
-        const dataNasc = document.getElementById('petNascimento').value;
-
-        if (selected && dataDose && selected.value !== "") {
-            let dias = parseInt(selected.dataset.reforco) || 365;
-
-            if (dataNasc) {
-                const dNasc = new Date(dataNasc + 'T12:00:00');
-                const dDose = new Date(dataDose + 'T12:00:00');
-                const meses = (dDose - dNasc) / (1000 * 60 * 60 * 24 * 30);
+        <form id="formTutor">
+            <div class="card-premium" id="cardTutor">
+                <h3 class="section-title-p"><i class="fas fa-user-circle" style="color: var(--primary);"></i> Dados do Tutor</h3>
                 
-                const vacinasPrincipais = ['V10', 'V8', 'V5', 'Giardia'];
-                if (meses < 4 && vacinasPrincipais.includes(selected.value)) {
-                    dias = 21;
-                }
-            }
-
-            let [ano, mes, dia] = dataDose.split('-');
-            let d = new Date(ano, mes - 1, dia); 
-            d.setDate(d.getDate() + dias);
-            document.getElementById('dataRevacinaPrevista').value = d.toISOString().split('T')[0];
-        }
-    };
-    
-    selVacina.addEventListener('change', calcularRetorno);
-    inputDataDose.addEventListener('change', calcularRetorno);
-
-    document.getElementById('btnAddVacinaLista').onclick = () => {
-        const nome = selVacina.value;
-        const dose = inputDataDose.value;
-        const revac = document.getElementById('dataRevacinaPrevista').value;
-        
-        if(!nome || !dose || !revac) return alert("Preencha a vacina, data da dose e previsão de retorno!");
-
-        listaVacinasTemp.push({ nome: nome, data_aplicacao: dose, data_revacina: revac });
-        
-        const item = document.createElement('div');
-        item.style = "border-left: 3px solid var(--primary); padding: 8px; margin-bottom: 5px; background: #eee; border-radius: 5px; font-size: 0.8rem;";
-        item.innerHTML = `<b>${nome}</b><br><small>Retorno: ${revac.split('-').reverse().join('/')}</small>`;
-        document.getElementById('miniListaVacinas').appendChild(item);
-            
-        selVacina.value = "";
-        inputDataDose.value = "";
-        document.getElementById('dataRevacinaPrevista').value = "";
-    };
-
-    formPet.onsubmit = async (e) => {
-        e.preventDefault();
-        
-        if(!tutorIdAtual) return alert("Erro: Salve o tutor primeiro!");
-
-        const btn = e.target.querySelector('button[type="submit"]');
-        const comp = document.querySelector('input[name="comportamento"]:checked');
-        const tutorTel = document.getElementById('cliTel').value.replace(/\D/g, ''); 
-
-        let proximaRevacinaGlobal = null;
-        if(listaVacinasTemp.length > 0) {
-            let datas = listaVacinasTemp.map(v => new Date(v.data_revacina + 'T12:00:00').getTime());
-            proximaRevacinaGlobal = new Date(Math.min(...datas)).toISOString().split('T')[0];
-        }
-
-        const petData = {
-            nome: document.getElementById('petNome').value.trim(),
-            especie: selEspecie.value,
-            raca: document.getElementById('petRaca').value || 'SRD',
-            sexo: document.getElementById('petSexo').value,
-            castrado: document.getElementById('petCastrado').value === 'sim',
-            microchip: document.getElementById('petChip').value || '',
-            nascimento: document.getElementById('petNascimento').value,
-            comportamento: comp ? comp.value : 'manso',
-            vacinas: listaVacinasTemp, 
-            data_revacina: proximaRevacinaGlobal || '2099-12-31', 
-            tutorTel: tutorTel, 
-            criadoEm: new Date()
-        };
-
-        try {
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando Pet...';
-            
-            await db.collection('clientes').doc(tutorIdAtual).collection('pets').add(petData);
-            
-            alert("🐾 Pet salvo com sucesso!");
-            
-            const cardMini = document.createElement('div');
-            cardMini.style = "padding:10px; margin-bottom:8px; border-left: 4px solid var(--primary); background: white; border-radius: 10px; font-weight: bold;";
-            cardMini.textContent = `${petData.nome} (${petData.raca})`;
-            document.getElementById('listaPetsCadastrados').appendChild(cardMini);
+                <label class="label-premium">Nome Completo *</label>
+                <input type="text" id="cliNome" class="input-premium" placeholder="Ex: Rodrigo Preissler" required>
                 
-            limparFormularioPet();
-        } catch (err) { 
-            console.error(err);
-            alert("Erro ao salvar pet: " + err.message); 
-            btn.disabled = false; 
-            btn.innerHTML = 'SALVAR ESTE PET';
-        }
-    };
+                <div class="row-app">
+                    <div class="col-50">
+                        <label class="label-premium">CPF</label>
+                        <input type="text" id="cliCpf" class="input-premium" placeholder="000.000.000-00" oninput="this.value = Utils.maskCPF(this.value)">
+                    </div>
+                    <div class="col-50">
+                        <label class="label-premium">WhatsApp *</label>
+                        <input type="tel" id="cliTel" class="input-premium" placeholder="(21) 90000-0000" oninput="this.value = Utils.maskPhone(this.value)" required>
+                    </div>
+                </div>
 
-    document.getElementById('btnCancelarPet').onclick = limparFormularioPet;
-}
+                <div class="row-app">
+                    <div class="col-50">
+                        <label class="label-premium">CEP</label>
+                        <input type="text" id="cliCep" class="input-premium" placeholder="00000-000" oninput="this.value = Utils.maskCEP(this.value)">
+                    </div>
+                    <div class="col-50">
+                        <label class="label-premium">Número</label>
+                        <input type="text" id="cliNum" class="input-premium" placeholder="Nº">
+                    </div>
+                </div>
+                
+                <label class="label-premium">Endereço / Bairro</label>
+                <input type="text" id="cliEndereco" class="input-premium" placeholder="Rua, Bairro, Magé - RJ">
 
-// AUXILIARES
-function preencherCamposTutor(d) {
-    document.getElementById('cliNome').value = d.nome || '';
-    document.getElementById('cliCpf').value = d.cpf || '';
-    document.getElementById('cliTel').value = d.telefoneFormatado || d.telefone || '';
-    document.getElementById('cliCep').value = d.cep || '';
-    document.getElementById('cliEndereco').value = d.endereco || '';
-    document.getElementById('cliNum').value = d.numero || '';
-}
+                <button type="submit" class="btn-p-solid" id="btnSalvarTutor">
+                    <i class="fas fa-save"></i> SALVAR TUTOR
+                </button>
+            </div>
+        </form>
 
-function avancarParaPets() {
-    document.getElementById('cardTutor').style.opacity = '0.6';
-    document.getElementById('cardTutor').style.pointerEvents = 'none';
-    document.getElementById('secaoPets').style.display = 'block';
-    setTimeout(() => {
-        document.getElementById('secaoPets').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
-}
+        <div id="secaoPets" style="display: none;">
+            
+            <div style="margin: 25px 0 15px 5px;">
+                <h3 style="margin:0; font-weight: 900; color: var(--primary);"><i class="fas fa-paw"></i> Pets do Cliente</h3>
+                <p style="margin:5px 0; font-size: 0.85rem; color: var(--text-muted);">Vincule os animais a este tutor</p>
+            </div>
 
-function limparFormularioPet() {
-    document.getElementById('formPet').reset();
-    listaVacinasTemp = [];
-    document.getElementById('miniListaVacinas').innerHTML = '';
-    document.getElementById('formPet').style.display = 'none';
-    document.getElementById('btnMostrarFormPet').style.display = 'block';
-    document.getElementById('secaoPets').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
+            <div id="listaPetsCadastrados" style="margin-bottom: 20px;"></div>
+
+            <button type="button" class="btn-p-outline" id="btnMostrarFormPet">
+                <i class="fas fa-plus-circle"></i> ADICIONAR NOVO PET
+            </button>
+
+            <form id="formPet" style="display: none;">
+                <div class="card-premium" style="border-top-color: var(--secondary);">
+                    
+                    <div class="row-app">
+                        <div class="col-50">
+                            <label class="label-premium">Nome do Pet *</label>
+                            <input type="text" id="petNome" class="input-premium" placeholder="Ex: Bob" required>
+                        </div>
+                        <div class="col-50">
+                            <label class="label-premium">Espécie</label>
+                            <select id="petEspecie" class="input-premium">
+                                <option value="">Selecione...</option>
+                                <option value="canino">Cão</option>
+                                <option value="felino">Gato</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row-app">
+                        <div class="col-50">
+                            <label class="label-premium">Raça</label>
+                            <input list="listaRacasSugestao" id="petRaca" class="input-premium" placeholder="Digite a raça">
+                            <datalist id="listaRacasSugestao"></datalist>
+                        </div>
+                        <div class="col-50">
+                            <label class="label-premium">Sexo</label>
+                            <select id="petSexo" class="input-premium">
+                                <option value="macho">Macho</option>
+                                <option value="femea">Fêmea</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row-app">
+                        <div class="col-50">
+                            <label class="label-premium">Nascimento *</label>
+                            <input type="date" id="petNascimento" class="input-premium" required>
+                        </div>
+                        <div class="col-50">
+                            <label class="label-premium">Castrado?</label>
+                            <select id="petCastrado" class="input-premium">
+                                <option value="nao">Não</option>
+                                <option value="sim">Sim</option>
+                            </select>
+                        </div>
+                    </div>
+                    <label class="label-premium">Microchip</label>
+                    <input type="text" id="petChip" class="input-premium" placeholder="Nº do chip (opcional)">
+                    <label class="label-premium">Comportamento</label>
+                    <div class="behavior-selector">
+                        <label style="flex:1">
+                            <input type="radio" name="comportamento" value="manso" style="display:none;" checked>
+                            <div class="badge-behavior badge-green">Manso</div>
+                        </label>
+                        <label style="flex:1">
+                            <input type="radio" name="comportamento" value="assustado" style="display:none;">
+                            <div class="badge-behavior badge-yellow">Assustado</div>
+                        </label>
+                        <label style="flex:1">
+                            <input type="radio" name="comportamento" value="bravo" style="display:none;">
+                            <div class="badge-behavior badge-red">Bravo</div>
+                        </label>
+                    </div>
+
+                    <div class="vacina-box">
+                        <label class="label-premium" style="color: var(--primary);"><i class="fas fa-syringe"></i> Registro de Vacina</label>
+                        
+                        <select id="selVacina" class="input-premium">
+                            <option value="">Selecione a vacina...</option>
+                        </select>
+
+                        <div class="row-app">
+                            <div class="col-50">
+                                <label class="label-premium">Data da Dose</label>
+                                <input type="date" id="dataVac" class="input-premium">
+                            </div>
+                            <div class="col-50">
+                                <label class="label-premium">Revacinar em</label>
+                                <input type="date" id="dataRevacinaPrevista" class="input-premium" style="background: #E8F5E9;">
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn-p-outline" id="btnAddVacinaLista" style="padding: 10px; margin: 0; font-size: 0.8rem; border-style: solid;">
+                            <i class="fas fa-stamp"></i> CARIMBAR NA FICHA
+                        </button>
+                        
+                        <div id="miniListaVacinas" style="margin-top: 15px; font-size: 0.8rem; font-weight: 600;"></div>
+                    </div>
+
+                    <div style="display: flex; gap: 12px; margin-top: 25px;">
+                        <button type="button" class="btn-p-outline" id="btnCancelarPet" style="flex: 1; border-color: #DDD; color: #999; margin:0;">Cancelar</button>
+                        <button type="submit" class="btn-p-solid" style="flex: 2; background: var(--secondary); box-shadow: 0 6px 15px rgba(255, 107, 107, 0.2);">SALVAR PET</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/client-service.js"></script>
+    <script src="js/novo_cliente_controller.js"></script>
+
+</body>
+</html>
