@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#4ECDC4">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pacientes - Dra. Natalia Monteiro</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --primary: #4ECDC4;
+            --secondary: #FF6B6B;
+            --bg-app: #F7F9FC;
+            --card-white: #FFFFFF;
+            --text-main: #2D3436;
+            --text-muted: #636e72;
+            --warning: #FF9500;
+        }
+
+        body { 
+            background-color: var(--bg-app); 
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            color: var(--text-main);
+            padding-bottom: 50px;
+        }
+
+        /* Top Bar Premium */
+        .top-bar-app {
+            background: linear-gradient(135deg, var(--primary), #45b7af);
+            padding: 30px 25px 20px 25px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-radius: 0 0 25px 25px;
+            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .btn-back-nav { 
+            background: rgba(255,255,255,0.2); 
+            border: none; color: white; 
+            width: 35px; height: 35px; 
+            border-radius: 10px; 
+            display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; 
+        }
+
+        .container-app { padding: 15px 20px; }
+
+        .section-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin: 25px 0 12px 5px; 
+        }
+
+        .title-section { 
+            font-size: 1rem; 
+            font-weight: 900; 
+            color: var(--text-main); 
+            margin: 0; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px;
+        }
+
+        /* Carrossel Horizontal */
+        .carousel-pets { 
+            display: flex; 
+            overflow-x: auto; 
+            gap: 18px; 
+            padding: 5px 5px 15px 5px; 
+            scroll-snap-type: x mandatory; 
+            -webkit-overflow-scrolling: touch; 
+        }
+        .carousel-pets::-webkit-scrollbar { display: none; }
+        
+        /* Card de Pet Premium */
+        .card-pet-p { 
+            min-width: 210px; 
+            background: var(--card-white); 
+            border-radius: 22px; 
+            padding: 20px; 
+            box-shadow: 0 8px 20px rgba(149, 157, 165, 0.06); 
+            flex-shrink: 0; 
+            scroll-snap-align: start;
+            border-top: 6px solid var(--primary); 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px;
+            transition: transform 0.2s;
+        }
+        .card-pet-p:active { transform: scale(0.96); }
+
+        .card-pet-p.border-red { border-top-color: var(--secondary); }
+        .card-pet-p.border-orange { border-top-color: var(--warning); }
+        
+        .pet-info-main { font-weight: 900; font-size: 1.25rem; color: var(--text-main); letter-spacing: -0.3px; }
+        .pet-info-sub { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; line-height: 1.3; }
+        
+        .btn-atender-pet { 
+            margin-top: 12px; 
+            background: #F0FBF9; 
+            color: var(--primary); 
+            border: none; 
+            padding: 12px; 
+            border-radius: 14px; 
+            font-weight: 800; 
+            cursor: pointer;
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 8px;
+            font-size: 0.85rem;
+            transition: 0.2s;
+        }
+        .btn-atender-pet:hover { background: var(--primary); color: white; }
+        
+        .empty-msg { 
+            background: rgba(0,0,0,0.02);
+            border: 1px dashed #DDD;
+            border-radius: 20px;
+            width: 100%;
+            text-align: center;
+            color: var(--text-muted); 
+            font-size: 0.85rem; 
+            padding: 30px; 
+        }
+
+        i.section-icon { color: var(--primary); font-size: 1.2rem; }
+        .icon-red { color: var(--secondary) !important; }
+        .icon-orange { color: var(--warning) !important; }
+
+    </style>
+</head>
+<body>
+
+    <header class="top-bar-app">
+        <button class="btn-back-nav" onclick="window.location.href='home.html'"><i class="fas fa-chevron-left"></i></button>
+        <h1 style="margin:0; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.5px;">Pacientes - Dra Natalia Monteiro</h1>
+    </header>
+
+    <main class="container-app">
+        
+        <div class="section-header">
+            <h3 class="title-section"><i class="fas fa-calendar-day section-icon"></i> Visitas de Hoje</h3>
+        </div>
+        <div class="carousel-pets" id="listaHoje">
+            <p class="empty-msg">Buscando agenda...</p>
+        </div>
+
+        <div class="section-header">
+            <h3 class="title-section"><i class="fas fa-calendar-check section-icon icon-orange"></i> Próximos (Amanhã)</h3>
+        </div>
+        <div class="carousel-pets" id="listaAmanha">
+            <p class="empty-msg">Verificando...</p>
+        </div>
+
+        <div class="section-header">
+            <h3 class="title-section"><i class="fas fa-syringe section-icon icon-red"></i> Vacinas Vencidas</h3>
+        </div>
+        <div class="carousel-pets" id="listaVacinas">
+            <p class="empty-msg">Verificando...</p>
+        </div>
+
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+
+    <script>
+        // Lógica de fuso horário correta para Brasil/Magé
+        const dataHoje = new Date();
+        const offset = dataHoje.getTimezoneOffset();
+        const hojeIso = new Date(dataHoje.getTime() - (offset*60*1000)).toISOString().split('T')[0];
+
+        const amanha = new Date(dataHoje.getTime() - (offset*60*1000));
+        amanha.setDate(amanha.getDate() + 1);
+        const amanhaIso = amanha.toISOString().split('T')[0];
+
+        window.onload = carregarPainelPets;
+
+        async function carregarPainelPets() {
+            try {
+                // 1. Buscar Agendados
+                const agendaSnap = await db.collection("agenda").orderBy("data").get();
+                const containerHoje = document.getElementById("listaHoje");
+                const containerAmanha = document.getElementById("listaAmanha");
+                
+                containerHoje.innerHTML = "";
+                containerAmanha.innerHTML = "";
+
+                agendaSnap.forEach(doc => {
+                    const ag = doc.data();
+                    if (ag.data === hojeIso) {
+                        renderPetCard(containerHoje, ag.petNome, ag.servico || 'Atendimento agendado', ag.tutorId, ag.petId, "");
+                    } else if (ag.data === amanhaIso) {
+                        renderPetCard(containerAmanha, ag.petNome, ag.servico || 'Atendimento agendado', ag.tutorId, ag.petId, "border-orange");
+                    }
+                });
+
+                if(containerHoje.innerHTML === "") containerHoje.innerHTML = "<div class='empty-msg'>Nenhum paciente para hoje.</div>";
+                if(containerAmanha.innerHTML === "") containerAmanha.innerHTML = "<div class='empty-msg'>Agenda de amanhã livre.</div>";
+
+                // 2. Buscar Vacinas Vencidas
+                const containerVacinas = document.getElementById("listaVacinas");
+                containerVacinas.innerHTML = "";
+                
+                const clientesSnap = await db.collection("clientes").get();
+                let temVacinaVencida = false;
+
+                for (const docTutor of clientesSnap.docs) {
+                    const petsSnap = await db.collection("clientes").doc(docTutor.id).collection("pets").get();
+                    petsSnap.forEach(docPet => {
+                        const pet = docPet.data();
+                        if (pet.data_revacina && pet.data_revacina < hojeIso) {
+                            temVacinaVencida = true;
+                            renderPetCard(containerVacinas, pet.nome, "Atrasada desde: " + pet.data_revacina.split('-').reverse().join('/'), docTutor.id, docPet.id, "border-red");
+                        }
+                    });
+                }
+                
+                if(!temVacinaVencida) containerVacinas.innerHTML = "<div class='empty-msg'>Toda a prevenção em dia! ✨</div>";
+
+            } catch (e) { console.error(e); }
+        }
+
+        function renderPetCard(container, nome, info, tId, pId, extraClass) {
+            const div = document.createElement("div");
+            div.className = "card-pet-p " + extraClass;
+            div.innerHTML = `
+                <span class="pet-info-main">${nome}</span>
+                <span class="pet-info-sub">${info}</span>
+                <button class="btn-atender-pet" onclick="irParaConsulta('${tId}', '${pId}')">
+                    <i class="fas fa-file-medical"></i> VER FICHA
+                </button>
+            `;
+            container.appendChild(div);
+        }
+
+        function irParaConsulta(tId, pId) {
+            if(!tId || !pId) return alert("Erro ao localizar ficha.");
+            window.location.href = `consulta.html?petId=${pId}&tutorId=${tId}`;
+        }
+    </script>
+</body>
+</html>

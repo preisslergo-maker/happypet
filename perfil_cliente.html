@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#4ECDC4">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Perfil do Tutor - Dra. Natalia Monteiro</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --primary: #4ECDC4;
+            --secondary: #FF6B6B;
+            --bg-app: #F7F9FC;
+            --card-white: #FFFFFF;
+            --text-main: #2D3436;
+            --text-muted: #636e72;
+            --whatsapp: #25D366;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Roboto, sans-serif; 
+            background-color: var(--bg-app); 
+            margin: 0; 
+            color: var(--text-main);
+            padding-bottom: 40px;
+        }
+
+        /* Top Bar Padrão */
+        .top-bar-app {
+            background: linear-gradient(135deg, var(--primary), #45b7af);
+            padding: 30px 25px 20px 25px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-radius: 0 0 25px 25px;
+            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .btn-back-nav { 
+            background: rgba(255,255,255,0.2); 
+            border: none; color: white; 
+            width: 35px; height: 35px; 
+            border-radius: 10px; 
+            display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; 
+        }
+
+        .container-perfil { padding: 20px; }
+
+        /* Alerta de Pendência Estilizado */
+        .pendencia-box-premium { 
+            background: #FFF1F0; 
+            border: 2px solid #FFA39E; 
+            padding: 18px; 
+            border-radius: 20px; 
+            color: #CF1322; 
+            font-weight: 800; 
+            margin-bottom: 20px; 
+            text-align: center; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.1);
+        }
+
+        /* Card de Informações */
+        .card-perfil-premium { 
+            background: white; 
+            border-radius: 25px; 
+            padding: 25px; 
+            box-shadow: 0 8px 25px rgba(149, 157, 165, 0.05); 
+            margin-bottom: 25px; 
+        }
+
+        .label-premium { 
+            font-size: 0.7rem; 
+            font-weight: 800; 
+            color: var(--primary); 
+            margin-bottom: 5px; 
+            display: block; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-premium { 
+            font-size: 1.1rem; 
+            color: var(--text-main); 
+            font-weight: 600;
+            margin-bottom: 20px; 
+            border: none;
+            border-bottom: 2px solid #F0F0F0; 
+            padding: 8px 0; 
+            width: 100%; 
+            background: transparent;
+            outline: none;
+            font-family: inherit;
+        }
+        .input-premium:focus { border-bottom-color: var(--primary); }
+
+        /* Botões */
+        .btn-zap-premium { 
+            background: var(--whatsapp); 
+            color: white; 
+            border: none; 
+            width: 100%; 
+            padding: 16px; 
+            border-radius: 18px; 
+            font-weight: 800; 
+            font-size: 1rem; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 12px; 
+            text-decoration: none; 
+            margin-bottom: 20px;
+            box-shadow: 0 6px 15px rgba(37, 211, 102, 0.2);
+        }
+
+        .btn-save-premium { 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            width: 100%; 
+            padding: 18px; 
+            border-radius: 18px; 
+            font-weight: 800; 
+            font-size: 1.1rem; 
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(78, 205, 196, 0.3);
+        }
+
+        /* Seção de Pets */
+        .title-section-p { font-size: 1rem; font-weight: 900; margin: 30px 0 15px 5px; color: var(--text-main); }
+
+        .pet-card-p { 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            background: white; 
+            padding: 15px; 
+            border-radius: 20px; 
+            margin-bottom: 12px; 
+            cursor: pointer; 
+            border-left: 6px solid var(--primary);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            transition: transform 0.2s;
+        }
+        .pet-card-p:active { transform: scale(0.97); }
+        .pet-card-p i { font-size: 1.8rem; color: var(--primary); background: #E0F7F5; padding: 10px; border-radius: 12px; }
+        
+    </style>
+</head>
+<body>
+
+    <header class="top-bar-app">
+        <button class="btn-back-nav" onclick="history.back()"><i class="fas fa-chevron-left"></i></button>
+        <h1 style="margin:0; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.5px;">Dados do Cliente - Dra Natalia Monteiro</h1>
+    </header>
+
+    <main class="container-perfil">
+        
+        <div id="statusPendencia" style="display: none;"></div>
+
+        <a id="linkZap" href="#" target="_blank" class="btn-zap-premium">
+            <i class="fab fa-whatsapp"></i> CONVERSAR NO WHATSAPP
+        </a>
+
+        <div class="card-perfil-premium">
+            <label class="label-premium">Nome Completo</label>
+            <input type="text" id="pNome" class="input-premium">
+
+            <label class="label-premium">CPF</label>
+            <input type="text" id="pCpf" class="input-premium">
+
+            <label class="label-premium">Telefone de Contato</label>
+            <input type="text" id="pTelefone" class="input-premium">
+
+            <label class="label-premium">Endereço / Bairro em Magé</label>
+            <input type="text" id="pEndereco" class="input-premium">
+        </div>
+
+        <h3 class="title-section-p"><i class="fas fa-paw" style="color: var(--primary);"></i> Pets Vinculados</h3>
+        <div id="listaPetsTutor">
+            <p style="text-align: center; color: var(--text-muted); padding: 20px;">Carregando pacientes...</p>
+        </div>
+
+        <div style="margin-top: 35px;">
+            <button class="btn-save-premium" onclick="atualizarDadosTutor()">
+                <i class="fas fa-check-circle"></i> SALVAR ALTERAÇÕES
+            </button>
+        </div>
+
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+
+    <script>
+        /* global db */
+        const params = new URLSearchParams(window.location.search);
+        const tutorId = params.get("tutorId");
+
+        window.onload = carregarPerfil;
+
+        async function carregarPerfil() {
+            try {
+                // 1. Carregar Dados do Tutor
+                const tSnap = await db.collection("clientes").doc(tutorId).get();
+                if (tSnap.exists) {
+                    const tutor = tSnap.data();
+                    document.getElementById("pNome").value = tutor.nome || "";
+                    document.getElementById("pCpf").value = tutor.cpf || "";
+                    document.getElementById("pTelefone").value = tutor.telefone || "";
+                    document.getElementById("pEndereco").value = tutor.endereco || "";
+
+                    if (tutor.telefone) {
+                        const telLimpo = tutor.telefone.replace(/\D/g, "");
+                        document.getElementById("linkZap").href = `https://wa.me/55${telLimpo}?text=Olá! Aqui é a Dra. Natália Monteiro.`;
+                    }
+
+                    if (tutor.total_pendencia > 0) {
+                        const box = document.getElementById("statusPendencia");
+                        box.style.display = "flex";
+                        box.className = "pendencia-box-premium";
+                        box.innerHTML = `<i class="fas fa-hand-holding-usd"></i> PENDÊNCIA FINANCEIRA: R$ ${tutor.total_pendencia.toFixed(2)}`;
+                    }
+                }
+
+                // 2. Carregar Pets
+                const pSnap = await db.collection("clientes").doc(tutorId).collection("pets").get();
+                const containerPets = document.getElementById("listaPetsTutor");
+                containerPets.innerHTML = "";
+
+                if(pSnap.empty) {
+                    containerPets.innerHTML = "<p style='text-align:center; color:gray;'>Nenhum pet cadastrado.</p>";
+                }
+
+                pSnap.forEach(doc => {
+                    const pet = doc.data();
+                    const div = document.createElement("div");
+                    div.className = "pet-card-p";
+                    div.onclick = () => window.location.href = `consulta.html?petId=${doc.id}&tutorId=${tutorId}`;
+                    div.innerHTML = `
+                        <i class="fas fa-dog"></i>
+                        <div>
+                            <strong style="font-size:1.1rem; color:var(--text-main);">${pet.nome}</strong><br>
+                            <small style="color:var(--text-muted); font-weight:600; text-transform:uppercase;">${pet.raca || "SRD"} • ${pet.peso_atual || "--"}kg</small>
+                        </div>
+                    `;
+                    containerPets.appendChild(div);
+                });
+
+            } catch (e) { console.error(e); }
+        }
+
+        async function atualizarDadosTutor() {
+            try {
+                const btn = document.querySelector(".btn-save-premium");
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> SALVANDO...';
+
+                await db.collection("clientes").doc(tutorId).update({
+                    nome: document.getElementById("pNome").value,
+                    cpf: document.getElementById("pCpf").value,
+                    telefone: document.getElementById("pTelefone").value,
+                    endereco: document.getElementById("pEndereco").value
+                });
+
+                alert("Perfil atualizado com sucesso!");
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check-circle"></i> SALVAR ALTERAÇÕES';
+            } catch (e) { 
+                alert("Erro ao salvar.");
+                console.error(e);
+            }
+        }
+    </script>
+</body>
+</html>

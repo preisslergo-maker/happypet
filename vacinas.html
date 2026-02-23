@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#4ECDC4">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cartão de Vacinas - Dra. Natália Monteiro</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --primary: #4ECDC4;
+            --secondary: #FF6B6B;
+            --bg-app: #F7F9FC;
+            --card-white: #FFFFFF;
+            --text-main: #2D3436;
+            --text-muted: #636e72;
+            --success: #34C759;
+            --warning: #FF9500;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Roboto, sans-serif; 
+            background-color: var(--bg-app); 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh;
+            color: var(--text-main);
+        }
+
+        /* Top Bar Premium */
+        .top-bar-app {
+            background: linear-gradient(135deg, var(--primary), #45b7af);
+            padding: 30px 25px 20px 25px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-radius: 0 0 25px 25px;
+            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .btn-back-nav { background: rgba(255,255,255,0.2); border: none; color: white; width: 35px; height: 35px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+        .container { padding: 20px; flex-grow: 1; overflow-y: auto; padding-bottom: 100px; }
+
+        /* Alerta de Revacinação */
+        .alerta-proxima-p { 
+            background: var(--card-white); 
+            margin-bottom: 20px; 
+            padding: 20px; 
+            border-radius: 22px; 
+            border-left: 8px solid var(--warning); 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.04); 
+        }
+        .alerta-proxima-p.vencida { border-left-color: var(--secondary); }
+        .alerta-proxima-p i { font-size: 1.5rem; color: var(--warning); }
+        .alerta-proxima-p.vencida i { color: var(--secondary); }
+        
+        .info-alerta h4 { margin: 0; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 800; }
+        .info-alerta p { margin: 2px 0 0 0; font-size: 1.2rem; font-weight: 900; color: var(--text-main); }
+
+        /* Lista de Vacinas */
+        .vacina-card-p { 
+            background: var(--card-white); 
+            border-radius: 18px; 
+            padding: 18px; 
+            margin-bottom: 15px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            border: 1px solid #F0F0F0;
+        }
+        
+        .vacina-info h3 { margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--text-main); }
+        .vacina-info p { margin: 4px 0 0 0; font-size: 0.85rem; color: var(--text-muted); font-weight: 500; }
+        
+        .vacina-data-box { text-align: right; }
+        .data-label { display: block; font-weight: 800; font-size: 0.95rem; color: var(--primary); }
+        .badge-aplicada { font-size: 0.65rem; background: #E0F7F5; color: #1A938A; padding: 4px 10px; border-radius: 8px; font-weight: 900; text-transform: uppercase; }
+
+        /* FAB (Botão Flutuante) */
+        .fab-p { 
+            position: fixed; bottom: 30px; right: 25px; 
+            width: 65px; height: 65px; 
+            background: var(--primary); 
+            border-radius: 22px; 
+            display: flex; align-items: center; justify-content: center; 
+            color: white; font-size: 1.5rem; 
+            box-shadow: 0 10px 25px rgba(78, 205, 196, 0.4); 
+            border: none; cursor: pointer; z-index: 100;
+        }
+
+        /* Modal Sheet */
+        .modal-sheet-p { 
+            display:none; position:fixed; bottom:0; left:0; width:100%; height:85%; 
+            background:white; border-radius:30px 30px 0 0; 
+            box-shadow:0 -10px 30px rgba(0,0,0,0.2); z-index:1000; 
+            padding:25px; box-sizing:border-box; animation: slideSheet 0.4s cubic-bezier(0.25, 1, 0.5, 1); overflow-y:auto; 
+        }
+        @keyframes slideSheet { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        .label-modal { font-size: 0.75rem; font-weight: 800; color: var(--primary); margin-bottom: 8px; display: block; text-transform: uppercase; }
+        .input-p { width:100%; padding: 16px; margin-bottom: 20px; border:1px solid #F0F0F0; border-radius: 15px; font-size: 1rem; box-sizing: border-box; background: #F9F9F9; outline: none; font-family: inherit; }
+        
+        .btn-salvar-p { 
+            width:100%; background:var(--primary); color:white; border:none; 
+            padding:18px; border-radius:18px; font-weight:900; font-size:1.1rem; 
+            margin-top: 10px; box-shadow: 0 6px 15px rgba(78, 205, 196, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <header class="top-bar-app">
+        <button class="btn-back-nav" id="btnVoltar">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <span style="font-weight: 800; font-size: 1.1rem; letter-spacing: 0.5px;" id="headerPetNome">VACINAS</span>
+    </header>
+
+    <div class="container">
+        <div class="alerta-proxima-p" id="cardProximaVacina">
+            <i class="fas fa-calendar-alt"></i>
+            <div class="info-alerta">
+                <h4>Próxima Revacinação</h4>
+                <p id="txtDataRevacina">Buscando...</p>
+            </div>
+        </div>
+
+        <div id="containerVacinas">
+            <p style="text-align: center; color: var(--text-muted); margin-top: 50px;">Carregando histórico...</p>
+        </div>
+    </div>
+
+    <button class="fab-p" onclick="document.getElementById('modalNovaVacina').style.display='block'">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <div id="modalNovaVacina" class="modal-sheet-p">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
+            <h3 style="margin:0; font-weight: 900;">Nova Vacina</h3>
+            <button onclick="document.getElementById('modalNovaVacina').style.display='none'" style="background:none; border:none; color:var(--secondary); font-weight:800; font-size:1rem;">FECHAR</button>
+        </div>
+        
+        <label class="label-modal">Vacina</label>
+        <select id="selectVacinaPadrao" class="input-p" onchange="calcularDose()">
+            <option value="">-- Selecione o imunizante --</option>
+        </select>
+        
+        <label class="label-modal">Data do Reforço (Automático)</label>
+        <input type="date" id="v_proxima" class="input-p">
+        
+        <label class="label-modal">Lote / Laboratório (Opcional)</label>
+        <input type="text" id="v_obs" class="input-p" placeholder="Ex: Lote 123 - Zoetis">
+        
+        <button onclick="salvarVacina()" id="btnSalvar" class="btn-salvar-p">
+            CONCLUIR APLICAÇÃO
+        </button>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/utils.js"></script>
+
+    <script>
+        var params = new URLSearchParams(window.location.search);
+        var petId = params.get("petId");
+        var tutorId = params.get("tutorId");
+        var especiePet = "canino";
+        var vacinasData = {};
+
+        document.getElementById("btnVoltar").onclick = function() {
+            window.location.href = "consulta.html?petId=" + petId + "&tutorId=" + tutorId;
+        };
+
+        window.onload = function() {
+            if (!petId || !tutorId) return alert("Paciente não identificado.");
+            carregarDadosIniciais();
+        };
+
+        async function carregarDadosIniciais() {
+            try {
+                var petSnap = await db.collection("clientes").doc(tutorId).collection("pets").doc(petId).get();
+                if(petSnap.exists) {
+                    var pet = petSnap.data();
+                    especiePet = pet.especie || "canino";
+                    document.getElementById("headerPetNome").innerText = pet.nome.toUpperCase();
+                    
+                    if(pet.data_revacina) {
+                        document.getElementById("txtDataRevacina").innerText = pet.data_revacina.split("-").reverse().join("/");
+                        if(pet.data_revacina < new Date().toISOString().split("T")[0]) {
+                            document.getElementById("cardProximaVacina").classList.add("vencida");
+                        }
+                    } else {
+                        document.getElementById("txtDataRevacina").innerText = "Não definida";
+                    }
+                }
+
+                var padraoSnap = await db.collection("vacinas_padrao").get();
+                var select = document.getElementById("selectVacinaPadrao");
+                
+                padraoSnap.forEach(function(doc) {
+                    var v = doc.data();
+                    if (v.especie === especiePet || v.especie === "ambos") {
+                        var opt = document.createElement("option");
+                        opt.value = doc.id;
+                        opt.text = v.nome;
+                        select.add(opt);
+                        vacinasData[doc.id] = v;
+                    }
+                });
+
+                carregarHistorico();
+            } catch (e) { console.error(e); }
+        }
+
+        function calcularDose() {
+            var id = document.getElementById("selectVacinaPadrao").value;
+            if (!id) return;
+            var dias = vacinasData[id].dias_reforco || 365;
+            var dataDose = new Date();
+            dataDose.setDate(dataDose.getDate() + dias);
+            document.getElementById("v_proxima").value = dataDose.toISOString().split("T")[0];
+        }
+
+        async function carregarHistorico() {
+            var vacSnap = await db.collection("clientes").doc(tutorId).collection("pets").doc(petId).collection("historico")
+                            .where("tipo", "==", "vacina").orderBy("data", "desc").get();
+            
+            var container = document.getElementById("containerVacinas");
+            container.innerHTML = vacSnap.empty ? '<div style="text-align:center; padding:40px; opacity:0.5;"><i class="fas fa-syringe" style="font-size:3rem; margin-bottom:10px;"></i><p>Nenhuma vacina aplicada.<\/p><\/div>' : "";
+
+            vacSnap.forEach(function(doc) {
+                var v = doc.data();
+                var card = document.createElement("div");
+                card.className = "vacina-card-p";
+                card.innerHTML = '<div class="vacina-info"><h3>' + v.descricao + '<\/h3><p>' + (v.observacao || "Registro preventivo") + '<\/p><\/div>' +
+                                 '<div class="vacina-data-box"><span class="badge-aplicada">APLICADA<\/span><span class="data-label">' + v.data.split("T")[0].split("-").reverse().join("/") + '<\/span><\/div>';
+                container.appendChild(card);
+            });
+        }
+
+        async function salvarVacina() {
+            var select = document.getElementById("selectVacinaPadrao");
+            var nome = select.options[select.selectedIndex].text;
+            var proxima = document.getElementById("v_proxima").value;
+            var obs = document.getElementById("v_obs").value;
+
+            if (!select.value || !proxima) return alert("Selecione a vacina e a data de reforço.");
+
+            document.getElementById("btnSalvar").disabled = true;
+            document.getElementById("btnSalvar").innerText = "SALVANDO...";
+
+            try {
+                await db.collection("clientes").doc(tutorId).collection("pets").doc(petId).collection("historico").add({
+                    tipo: "vacina", data: new Date().toISOString(), descricao: nome, observacao: obs, data_proxima: proxima
+                });
+                await db.collection("clientes").doc(tutorId).collection("pets").doc(petId).update({ data_revacina: proxima });
+                location.reload();
+            } catch (e) { alert("Erro ao salvar."); document.getElementById("btnSalvar").disabled = false; }
+        }
+    </script>
+</body>
+</html>

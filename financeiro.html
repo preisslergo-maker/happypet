@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>    
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#4ECDC4">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Financeiro - Dra. Natália Monteiro</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { 
+            --primary: #4ECDC4; 
+            --secondary: #FF6B6B; 
+            --bg-app: #F7F9FC; 
+            --card-bg: #FFFFFF; 
+            --text-main: #2D3436; 
+            --text-muted: #636e72; 
+            --border: #F0F0F0; 
+            --success: #34C759; 
+            --warning: #FF9500; 
+            --danger: #FF3B30; 
+        }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg-app); margin: 0; display: flex; flex-direction: column; height: 100vh; color: var(--text-main); }
+        
+        .top-bar { 
+            background: linear-gradient(135deg, var(--primary), #45b7af); 
+            padding: 30px 20px 20px 20px; 
+            border-bottom: none; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            position: sticky; 
+            top: 0; 
+            z-index: 10; 
+            color: white;
+            border-radius: 0 0 25px 25px;
+            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2);
+        }
+        
+        .btn-voltar { background: rgba(255,255,255,0.2); border: none; color: white; font-size: 1rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap:5px; padding: 8px 12px; border-radius: 10px; }
+        
+        .container { padding: 15px; flex-grow: 1; overflow-y: auto; padding-bottom: 100px; }
+        
+        .tipo-selector { display: flex; background: #E0E7ED; padding: 4px; border-radius: 15px; margin-bottom: 20px; }
+        .tipo-btn { flex: 1; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; color: var(--text-muted); background: none; transition: 0.3s; }
+        .tipo-btn.active { background: white; color: var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        
+        .card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 15px; box-shadow: 0 8px 20px rgba(149, 157, 165, 0.05); }
+        .label-v { font-size: 0.7rem; font-weight: 800; color: var(--primary); margin-bottom: 10px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        select, input { width: 100%; padding: 15px; border: 1px solid var(--border); border-radius: 15px; font-size: 1rem; margin-bottom: 15px; box-sizing: border-box; background: #F9F9F9; outline: none; color: var(--text-main); }
+        
+        .item-servico { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--bg-app); }
+        
+        .total-box { background: #2D3436; color: white; padding: 25px; border-radius: 25px; margin-top: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .total-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        
+        .footer-fixo { position: fixed; bottom: 0; width: 100%; background: white; padding: 20px; border-top: none; border-radius: 30px 30px 0 0; box-shadow: 0 -10px 25px rgba(0,0,0,0.05); display: flex; gap: 15px; box-sizing: border-box; z-index: 100; }
+        
+        .btn-print { flex: 1; background: white; border: 2px solid var(--primary); color: var(--primary); padding: 15px; border-radius: 18px; font-weight: 800; cursor: pointer; }
+        .btn-save { flex: 2; background: var(--primary); color: white; border: none; padding: 15px; border-radius: 18px; font-weight: 800; box-shadow: 0 6px 15px rgba(78, 205, 196, 0.3); cursor: pointer; }
+        
+        .pendente { color: var(--secondary); font-weight: bold; }
+        .pago { color: var(--primary); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <header class="top-bar">
+        <button class="btn-voltar" onclick="irParaTimeline()"><i class="fas fa-chevron-left"></i> Voltar</button>
+        <span style="font-weight: 800; font-size: 1.1rem; letter-spacing: 0.5px;" id="txtPetNome">Financeiro</span>
+        <div style="width: 50px;"></div>
+    </header>
+
+    <div class="container">
+        <div class="tipo-selector">
+            <button class="tipo-btn active" id="btnOrcamento" onclick="setTipo('orcamento')">ORÇAMENTO</button>
+            <button class="tipo-btn" id="btnRecibo" onclick="setTipo('recibo')">RECIBO</button>
+        </div>
+
+        <div class="card">
+            <label class="label-v">Adicionar Serviço</label>
+            <select id="selectServicos" onchange="adicionarServico(this.value)">
+                <option value="">-- Selecione um serviço --</option>
+                <option value="OUTRO">+ Outro serviço manual</option>
+            </select>
+            <div id="listaCarrinho"></div>
+        </div>
+
+        <div id="camposRecibo" style="display: none;">
+            <div class="card">
+                <label class="label-v">Forma de Pagamento</label>
+                <select id="formaPagamento">
+                    <option value="Pix">Pix</option>
+                    <option value="Cartão">Cartão</option>
+                    <option value="Dinheiro">Dinheiro</option>
+                </select>
+                <label class="label-v">Desconto (R$)</label>
+                <input type="number" id="inputDesconto" placeholder="0.00" oninput="atualizarTotal()">
+                
+                <label class="label-v">Valor Pago Agora (R$)</label>
+                <input type="number" id="inputValorPago" placeholder="Quanto o cliente pagou?" oninput="atualizarTotal()">
+            </div>
+        </div>
+
+        <div class="total-box">
+            <div class="total-row"><span>Subtotal:</span><span id="txtSubtotal">R$ 0,00</span></div>
+            <div class="total-row" id="rowDesconto" style="display:none; color: #4ECDC4;"><span>Desconto:</span><span id="txtDescontoValor">- R$ 0,00</span></div>
+            <div class="total-row" style="font-size: 1.4rem; font-weight: bold; margin-top: 10px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
+                <span>TOTAL:</span><span id="txtTotal">R$ 0,00</span>
+            </div>
+            <div class="total-row" id="rowPendencia" style="display:none; margin-top: 10px; padding-top: 5px;">
+                <span>SALDO DEVEDOR:</span><span id="txtPendencia" style="color: #FF6B6B;">R$ 0,00</span>
+            </div>
+            <p id="msgValidade" style="font-size: 0.65rem; color: #fab1a0; margin-top: 15px; font-weight: bold;">* Válido por 15 dias.</p>
+        </div>
+    </div>
+
+    <div class="footer-fixo">
+        <button class="btn-print" onclick="gerarImpressao()">PDF</button>
+        <button class="btn-save" id="btnSalvarGeral" onclick="finalizarFinanceiro()">SALVAR</button>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+
+    <script>
+        var params = new URLSearchParams(window.location.search);
+        var petId = params.get("petId");
+        var tutorId = params.get("tutorId");
+        var tipoAtual = "orcamento";
+        var servicosDB = [];
+        var carrinho = [];
+        var servicosParaAdicionarAoBanco = [];
+
+        function irParaTimeline() { window.location.href = "consulta.html?petId=" + petId + "&tutorId=" + tutorId; }
+
+        window.onload = carregarDadosIniciais;
+
+        async function carregarDadosIniciais() {
+            try {
+                var pSnap = await db.collection("clientes").doc(tutorId).collection("pets").doc(petId).get();
+                if(pSnap.exists) document.getElementById("txtPetNome").innerText = pSnap.data().nome.toUpperCase();
+                
+                var snap = await db.collection("servicos").orderBy("nome").get();
+                var select = document.getElementById("selectServicos");
+                snap.forEach(function(doc) {
+                    var s = doc.data();
+                    servicosDB.push({id: doc.id, nome: s.nome, valor: s.valor});
+                    var opt = document.createElement("option");
+                    opt.value = doc.id;
+                    opt.text = s.nome + " - R$ " + s.valor.toFixed(2);
+                    select.add(opt);
+                });
+            } catch(e) { console.error(e); }
+        }
+
+        function setTipo(t) {
+            tipoAtual = t;
+            document.getElementById("btnOrcamento").className = (t === "orcamento") ? "tipo-btn active" : "tipo-btn";
+            document.getElementById("btnRecibo").className = (t === "recibo") ? "tipo-btn active" : "tipo-btn";
+            document.getElementById("camposRecibo").style.display = (t === "recibo") ? "block" : "none";
+            document.getElementById("msgValidade").style.display = (t === "orcamento") ? "block" : "none";
+            document.getElementById("rowDesconto").style.display = (t === "recibo") ? "flex" : "none";
+            document.getElementById("rowPendencia").style.display = (t === "recibo") ? "flex" : "none";
+            
+            if(t === 'recibo'){
+                atualizarTotal();
+            }
+        }
+
+        function adicionarServico(val) {
+            if (!val) return;
+            if (val === "OUTRO") {
+                var n = prompt("Nome do serviço:");
+                var v = parseFloat(prompt("Valor (R$):").replace(",", "."));
+                if (n && v) {
+                    var item = { nome: n, valor: v };
+                    carrinho.push(item);
+                    servicosParaAdicionarAoBanco.push(item);
+                }
+            } else {
+                var s = servicosDB.find(function(x) { return x.id === val; });
+                carrinho.push({ nome: s.nome, valor: s.valor });
+            }
+            document.getElementById("selectServicos").value = "";
+            renderCarrinho();
+        }
+
+        function renderCarrinho() {
+            var cont = document.getElementById("listaCarrinho");
+            cont.innerHTML = "";
+            carrinho.forEach(function(item, index) {
+                var div = document.createElement("div");
+                div.className = "item-servico";
+                div.innerHTML = "<span>" + item.nome + "</span><div><strong>R$ " + item.valor.toFixed(2) + "</strong> <button onclick='removerItem("+index+")' style='color:#FF6B6B; border:none; background:none; font-size:1.5rem; margin-left:10px; cursor:pointer;'>&times;</button></div>";
+                cont.appendChild(div);
+            });
+            atualizarTotal();
+        }
+
+        function removerItem(i) {
+            carrinho.splice(i, 1);
+            renderCarrinho();
+        }
+
+        function atualizarTotal() {
+            var sub = 0;
+            for(var i=0; i<carrinho.length; i++) { sub += carrinho[i].valor; }
+            var desc = parseFloat(document.getElementById("inputDesconto").value) || 0;
+            var total = sub - desc;
+            
+            var pago = parseFloat(document.getElementById("inputValorPago").value);
+            if (isNaN(pago) && tipoAtual === "recibo") {
+                pago = 0; 
+            }
+
+            document.getElementById("txtSubtotal").innerText = "R$ " + sub.toFixed(2);
+            document.getElementById("txtDescontoValor").innerText = "- R$ " + desc.toFixed(2);
+            document.getElementById("txtTotal").innerText = "R$ " + total.toFixed(2);
+            
+            var pendencia = total - (parseFloat(document.getElementById("inputValorPago").value) || 0);
+            document.getElementById("txtPendencia").innerText = "R$ " + Math.max(0, pendencia).toFixed(2);
+        }
+
+        async function finalizarFinanceiro() {
+            if (carrinho.length === 0) return alert("Adicione um serviço.");
+            
+            const btn = document.getElementById("btnSalvarGeral");
+            btn.disabled = true;
+            btn.innerText = "Processando...";
+            
+            try {
+                var sub = 0;
+                for(var i=0; i<carrinho.length; i++) { sub += carrinho[i].valor; }
+                var desc = parseFloat(document.getElementById("inputDesconto").value) || 0;
+                var total = sub - desc;
+                var pago = parseFloat(document.getElementById("inputValorPago").value) || 0;
+                var pendenciaAtual = total - pago;
+
+                var status = "pago";
+                if (tipoAtual === "recibo" && pendenciaAtual > 0) status = "pendente";
+                if (tipoAtual === "recibo" && pago === 0) status = "não pago";
+
+                await db.collection("clientes").doc(tutorId).collection("pets").doc(petId).collection("historico").add({
+                    tipo: tipoAtual,
+                    data: new Date().toISOString(),
+                    itens: carrinho,
+                    total: total,
+                    valorPago: pago,
+                    pendencia: pendenciaAtual,
+                    status: status,
+                    pagamento: (tipoAtual === "recibo") ? document.getElementById("formaPagamento").value : ""
+                });
+
+                if (tipoAtual === "recibo") {
+                    const tutorRef = db.collection("clientes").doc(tutorId);
+                    
+                    await db.runTransaction(async (transaction) => {
+                        const tutorDoc = await transaction.get(tutorRef);
+                        const pendenciaAntiga = tutorDoc.data().total_pendencia || 0;
+                        const novaPendenciaTotal = pendenciaAntiga + pendenciaAtual;
+                        
+                        transaction.update(tutorRef, {
+                            total_pendencia: novaPendenciaTotal,
+                            ultima_atualizacao_financeira: new Date().toISOString()
+                        });
+                    });
+                }
+
+                for (var j = 0; j < servicosParaAdicionarAoBanco.length; j++) {
+                    var s = servicosParaAdicionarAoBanco[j];
+                    await db.collection("servicos").add({ nome: s.nome, valor: s.valor });
+                }
+
+                alert("Financeiro atualizado!");
+                irParaTimeline();
+
+            } catch (e) { 
+                console.error("Erro financeiro:", e);
+                alert("Erro ao processar financeiro."); 
+                btn.disabled = false;
+                btn.innerText = "Salvar";
+            }
+        }
+        function gerarImpressao() {
+            var sub = 0;
+            var itensStr = "";
+            for(var i=0; i<carrinho.length; i++) { 
+                sub += carrinho[i].valor; 
+                itensStr += "<div style='display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding:5px 0;'><span>"+carrinho[i].nome+"</span><span>R$ "+carrinho[i].valor.toFixed(2)+"</span></div>";
+            }
+            var desc = parseFloat(document.getElementById("inputDesconto").value) || 0;
+            var pago = parseFloat(document.getElementById("inputValorPago").value) || 0;
+            var tot = sub - desc;
+            var pend = tot - pago;
+            var pet = document.getElementById("txtPetNome").innerText;
+            
+            var html = "<html><head><style>body{margin:0;font-family:sans-serif;}.bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;}.content{padding:180px 60px;}</style></head><body>";
+            html += "<img src='assets/receita_bg.jpg' class='bg'/><div class='content'><h2>"+tipoAtual.toUpperCase()+"</h2>";
+            html += "<p><strong>Paciente:</strong> "+pet+"<br><strong>Data:</strong> "+new Date().toLocaleDateString("pt-BR")+"</p>";
+            html += "<div style='margin:30px 0;'>"+itensStr+"</div>";
+            html += "<div style='text-align:right;'>";
+            if(desc > 0) html += "Desconto: - R$ "+desc.toFixed(2)+"<br>";
+            html += "<strong>TOTAL: R$ "+tot.toFixed(2)+"</strong><br>";
+            
+            if(tipoAtual === "recibo") {
+                html += "Valor Pago: R$ "+pago.toFixed(2)+"<br>";
+                if(pend > 0) html += "<strong style='color:red;'>Pendente: R$ "+pend.toFixed(2)+"</strong><br>";
+            }
+            
+            html += "</div>";
+            if(tipoAtual === "orcamento") html += "<p style='margin-top:50px;font-size:12px;color:gray;'>* Validade: 15 dias.</p>";
+            html += "</div>";
+            
+            var sStart = "\x3Cscript\x3E";
+            var sEnd = "\x3C/script\x3E";
+            var bodyEnd = "\x3C/body\x3E";
+            var htmlEnd = "\x3C/html\x3E";
+            html += sStart + "window.onload=function(){window.print();setTimeout(function(){window.close();},500);}" + sEnd;
+            html += bodyEnd + htmlEnd;
+
+            var win = window.open("", "_blank");
+            win.document.write(html);
+            win.document.close();
+        }
+    </script>
+</body>
+</html>

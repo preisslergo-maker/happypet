@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#4ECDC4">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Registrar Exame - Dra. Natália Monteiro</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --primary: #4ECDC4;
+            --secondary: #FF6B6B;
+            --bg-app: #F7F9FC;
+            --card-white: #FFFFFF;
+            --text-main: #2D3436;
+            --text-muted: #636e72;
+            --border: #E5E5EA;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Roboto, sans-serif; 
+            background-color: var(--bg-app); 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh;
+            color: var(--text-main);
+        }
+
+        /* Top Bar Premium */
+        .top-bar-app {
+            background: linear-gradient(135deg, var(--primary), #45b7af);
+            padding: 30px 25px 20px 25px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-radius: 0 0 25px 25px;
+            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2);
+            z-index: 100;
+        }
+
+        .btn-back-nav { 
+            background: rgba(255,255,255,0.2); 
+            border: none; 
+            color: white; 
+            width: 35px; 
+            height: 35px; 
+            border-radius: 10px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: pointer; 
+        }
+
+        .container { padding: 25px; flex-grow: 1; overflow-y: auto; }
+
+        /* Estilo dos Inputs */
+        .card-form {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(149, 157, 165, 0.05);
+        }
+
+        .label-premium { 
+            font-size: 0.75rem; 
+            font-weight: 800; 
+            color: var(--primary); 
+            margin-bottom: 10px; 
+            display: block; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-premium { 
+            width: 100%; 
+            padding: 15px; 
+            margin-bottom: 20px; 
+            border: 1px solid #F0F0F0; 
+            border-radius: 15px; 
+            font-size: 1rem; 
+            box-sizing: border-box; 
+            background: #F9F9F9;
+            outline: none;
+            color: var(--text-main);
+            font-family: inherit;
+            transition: 0.3s;
+        }
+
+        .input-premium:focus {
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(78, 205, 196, 0.1);
+        }
+
+        /* Botão Salvar */
+        .btn-salvar-premium { 
+            width: 100%; 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 20px; 
+            border-radius: 18px; 
+            font-weight: 800; 
+            font-size: 1.1rem; 
+            cursor: pointer; 
+            box-shadow: 0 6px 20px rgba(78, 205, 196, 0.3);
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-salvar-premium:disabled { 
+            background: #C7C7CC; 
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        .icloud-info {
+            font-size: 0.8rem;
+            color: #5AC8FA;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="top-bar-app">
+        <button class="btn-back-nav" onclick="irParaTimeline()">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <span style="font-weight: 800; font-size: 1.1rem; letter-spacing: 0.5px;">REGISTRAR EXAME</span>
+    </header>
+
+    <div class="container">
+        <div class="card-form">
+            <label class="label-premium">Exames Realizados</label>
+            <input type="text" id="inputExames" class="input-premium" placeholder="Ex: Hemograma, Ultrassom...">
+
+            <label class="label-premium">Link do iCloud / Compartilhamento</label>
+            <div class="icloud-info">
+                <i class="fab fa-apple"></i> Use o link de colaboração do app Arquivos
+            </div>
+            <input type="url" id="inputLinkIcloud" class="input-premium" placeholder="https://www.icloud.com/...">
+
+            <label class="label-premium">Observações e Laudo</label>
+            <textarea id="inputObs" class="input-premium" style="height: 150px;" placeholder="Interpretações iniciais ou observações importantes..."></textarea>
+
+            <button class="btn-salvar-premium" id="btnSalvar" onclick="salvarExame()">
+                <i class="fas fa-check-circle"></i> SALVAR NO HISTÓRICO
+            </button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+    <script src="js/firebase-config.js"></script>
+
+    <script>
+        var params = new URLSearchParams(window.location.search);
+        var petId = params.get("petId");
+        var tutorId = params.get("tutorId");
+
+        function irParaTimeline() {
+            window.location.href = "consulta.html?petId=" + petId + "&tutorId=" + tutorId;
+        }
+
+        async function salvarExame() {
+            var examesText = document.getElementById("inputExames").value;
+            var linkIcloud = document.getElementById("inputLinkIcloud").value;
+            var obsText = document.getElementById("inputObs").value;
+            var btn = document.getElementById("btnSalvar");
+
+            if (!examesText) {
+                alert("Por favor, descreva os exames.");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> SALVANDO...';
+
+            try {
+                await db.collection("clientes")
+                        .doc(tutorId)
+                        .collection("pets")
+                        .doc(petId)
+                        .collection("historico")
+                        .add({
+                            tipo: "exame",
+                            data: new Date().toISOString(),
+                            descricao: examesText,
+                            link_direto: linkIcloud,
+                            observacao: obsText,
+                            isDocumento: false // Garante que a timeline identifique como link externo
+                        });
+
+                alert("Exame salvo com sucesso!");
+                irParaTimeline();
+
+            } catch (error) {
+                console.error("Erro ao salvar:", error);
+                alert("Erro ao salvar o exame.");
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check-circle"></i> SALVAR NO HISTÓRICO';
+            }
+        }
+    </script>
+</body>
+</html>

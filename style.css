@@ -1,0 +1,278 @@
+/* =========================================================
+   HAPPY PET - DESIGN DO APLICATIVO (MOBILE FIRST)
+========================================================= */
+:root {
+    --primary: #2e7d32;       /* Verde da marca */
+    --primary-dark: #1b5e20;
+    --bg-light: #f4f6f9;      /* Fundo da página */
+    --text-dark: #2c3e50;
+    --text-muted: #7f8c8d;
+    --card-bg: #ffffff;
+    --radius: 12px;
+    --danger: #e74c3c;
+    --warning: #f39c12;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+body { background-color: var(--bg-light); color: var(--text-dark); padding-bottom: 20px; }
+
+/* --- BARRA DE AÇÕES NO TOPO (Os botões que estavam feios) --- */
+.main-actions {
+    display: flex;
+    gap: 10px;
+    padding: 15px;
+    background: var(--card-bg);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.btn-top {
+    flex: 1; /* Faz os 3 botões terem o mesmo tamanho */
+    padding: 12px 5px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    transition: transform 0.2s;
+}
+
+.btn-top:active { transform: scale(0.95); }
+.btn-top i { font-size: 1.2rem; }
+
+/* Cores específicas para cada botão do topo */
+.btn-agendar { background: var(--primary); color: white; }
+.btn-consultar { background: #e0e6ed; color: var(--text-dark); }
+.btn-cancelar { background: #ffebee; color: var(--danger); }
+
+/* --- ESTRUTURA DOS CARROSSEIS --- */
+.container-app { padding: 0 15px; margin-top: 15px; }
+.section-container { margin-bottom: 25px; }
+
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.title-section { font-size: 1.1rem; color: var(--text-dark); font-weight: 700; margin-bottom: 8px; }
+.title-section.text-red { color: var(--danger); }
+
+/* O contador de agendamentos */
+.badge-count {
+    background: var(--primary);
+    color: white;
+    font-size: 0.8rem;
+    font-weight: bold;
+    padding: 3px 8px;
+    border-radius: 20px;
+}
+
+/* A mágica do Carrossel (Arrastar para o lado) */
+.carousel-snap, .carousel-snap-mini {
+    display: flex;
+    overflow-x: auto;
+    gap: 15px;
+    padding-bottom: 15px; /* Espaço para a sombra do card não cortar */
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch; /* Suavidade no iPhone */
+}
+
+/* Esconde a barra de rolagem feia */
+.carousel-snap::-webkit-scrollbar, .carousel-snap-mini::-webkit-scrollbar { display: none; }
+
+/* --- CARDS INJETADOS PELO JAVASCRIPT --- */
+/* Card Grande (Agendamentos) */
+.card-agendamento {
+    min-width: 240px; /* Reduzido de 85% para um tamanho fixo menor */
+    scroll-snap-align: start; /* Alinha o card no início da tela ao rolar */
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 12px; /* Reduzi o espaçamento interno para ficar mais enxuto */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    border-top: 4px solid var(--primary);
+}
+
+.card-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.time-badge { background: #e8f5e9; color: var(--primary); font-weight: bold; padding: 3px 8px; border-radius: 6px; font-size: 0.8rem; }
+.bairro-tag { font-size: 0.8rem; color: var(--text-muted); }
+
+.card-footer-actions { display: flex; gap: 8px; margin-top: 12px; }
+
+/* Cards Pequenos (Recentes, Vacinas, Débitos) */
+.card-mini {
+    min-width: 140px; /* Tamanho fixo para caber vários lado a lado */
+    scroll-snap-align: start;
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 15px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    border-left: 4px solid var(--primary);
+}
+.card-mini strong { display: block; font-size: 1rem; color: var(--text-dark); margin-bottom: 2px;}
+.card-mini small { font-size: 0.8rem; color: var(--text-muted); }
+
+/* --- BOTÕES DOS CARDS --- */
+.btn-card { flex: 1; padding: 8px; border: none; border-radius: 6px; font-weight: bold; font-size: 0.75rem; color: white; cursor: pointer; }
+.btn-atender { background: var(--primary); }
+.btn-reagendar { background: var(--warning); color: #fff; }
+.btn-canc-card { flex: 0 0 40px; background: #eee; color: var(--danger); }
+
+.btn-zap-mini {
+    background: #25d366; color: white; padding: 6px 10px; border-radius: 15px;
+    font-size: 0.75rem; font-weight: bold; border: none; display: flex;
+    align-items: center; justify-content: center; gap: 5px; cursor: pointer; margin-top: 10px; width: 100%;
+}
+
+/* --- MODAL PASTA DO CLIENTE --- */
+.modal-full {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: var(--bg-light); z-index: 2000; display: none; flex-direction: column;
+}
+.modal-full.active { display: flex; animation: slideUp 0.3s ease; }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+.tab-navigation { display: flex; background: var(--primary); }
+.tab-btn {
+    flex: 1; background: none; color: rgba(255,255,255,0.7); padding: 15px 0;
+    font-weight: bold; border: none; border-bottom: 4px solid transparent; cursor: pointer; transition: 0.3s;
+}
+.tab-btn.active { color: white; border-bottom: 4px solid #fbc02d; }
+.conteudo-aba { padding: 20px; overflow-y: auto; flex: 1; }
+
+
+/* =========================================================
+   TELA DE NOVO CADASTRO (CLIENTES E PETS)
+========================================================= */
+
+.card-form {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    border: 1px solid #eee;
+    transition: opacity 0.3s;
+}
+
+/* Ajuste dos campos e labels */
+.form-group { margin-bottom: 15px; }
+
+.form-group label, .col-50 label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 5px;
+}
+
+.input-app {
+    width: 100%;
+    padding: 12px 15px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    background: #fdfdfd;
+    font-size: 1rem;
+    color: var(--text-dark);
+    transition: all 0.3s ease;
+}
+
+.input-app:focus {
+    border-color: var(--primary);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.15);
+    outline: none;
+}
+
+/* Colunas lado a lado */
+.row-app {
+    display: flex;
+    gap: 12px;
+}
+.col-50 { flex: 1; }
+
+/* --- BOTÕES DO FORMULÁRIO --- */
+.btn-main-action {
+    background: var(--primary);
+    color: white;
+    border: none;
+    font-weight: bold;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 15px;
+    margin-top: 15px;
+    box-shadow: 0 4px 10px rgba(46, 125, 50, 0.2);
+    transition: 0.2s;
+}
+.btn-main-action:active { transform: scale(0.98); }
+.btn-main-action:disabled { background: #95a5a6; cursor: not-allowed; box-shadow: none; }
+
+.btn-outline-action {
+    background: transparent;
+    border: 2px dashed var(--primary);
+    color: var(--primary);
+    padding: 15px;
+    border-radius: 12px;
+    font-weight: bold;
+    width: 100%;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.btn-outline-action:active { background: #e8f5e9; }
+
+/* --- SELETOR DE COMPORTAMENTO (BADGES INTELIGENTES) --- */
+.behavior-selector {
+    display: flex;
+    gap: 10px;
+}
+
+.behavior-selector label { flex: 1; margin: 0; cursor: pointer; }
+
+.badge-behavior {
+    text-align: center;
+    padding: 10px 2px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    border: 2px solid transparent;
+    opacity: 0.4;
+    transition: 0.3s;
+}
+
+.badge-green { background: #e8f5e9; color: #2e7d32; }
+.badge-yellow { background: #fffde7; color: #fbc02d; }
+.badge-red { background: #ffebee; color: #c62828; }
+
+/* Quando a Natalia clica, o botão "acende" */
+input[name="comportamento"]:checked + .badge-behavior {
+    opacity: 1;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+input[value="manso"]:checked + .badge-green { border-color: #2e7d32; }
+input[value="assustado"]:checked + .badge-yellow { border-color: #fbc02d; }
+input[value="bravo"]:checked + .badge-red { border-color: #c62828; }
+
+
+/* --- TELA DE BUSCA INTELIGENTE --- */
+.item-busca {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    border-left: 5px solid var(--primary);
+    cursor: pointer;
+    transition: 0.2s;
+}
+.item-busca:active { transform: scale(0.98); background: #f8f9fa; }
+.item-busca strong { display: block; color: var(--text-dark); font-size: 1.15rem; margin-bottom: 3px; }
+.item-busca small { color: var(--text-muted); font-size: 0.85rem; display: block; }

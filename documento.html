@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#4ECDC4">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Documentos - Dra. Natália Monteiro</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        :root { --primary: #4ECDC4; --secondary: #FF6B6B; --bg-app: #F7F9FC; --card-white: #FFFFFF; --text-main: #2D3436; --text-muted: #636e72; }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: var(--bg-app); margin: 0; display: flex; flex-direction: column; height: 100vh; color: var(--text-main); }
+        .top-bar-app { background: linear-gradient(135deg, var(--primary), #45b7af); padding: 30px 25px 20px 25px; color: white; display: flex; align-items: center; gap: 15px; border-radius: 0 0 25px 25px; box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2); z-index: 100; }
+        .btn-back-nav { background: rgba(255,255,255,0.2); border: none; color: white; width: 35px; height: 35px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .container { padding: 20px; flex-grow: 1; overflow-y: auto; padding-bottom: 120px; }
+        .card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 20px rgba(149, 157, 165, 0.05); }
+        .label-v { font-size: 0.75rem; font-weight: 800; color: var(--primary); margin-bottom: 12px; display: block; text-transform: uppercase; }
+        select, textarea, input[type="text"] { width: 100%; padding: 15px; margin-bottom: 10px; border: 1px solid #F0F0F0; border-radius: 15px; font-size: 1rem; box-sizing: border-box; background: #F9F9F9; outline: none; font-family: inherit; }
+        .tags-container { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
+        .tag-btn { background: #E0F7F5; border: none; padding: 8px 15px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; cursor: pointer; color: #1A938A; }
+        .check-group { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 0.95rem; font-weight: 600; }
+        .check-group input { width: 22px; height: 22px; accent-color: var(--primary); }
+        .footer-fixo { position: fixed; bottom: 0; width: 100%; background: white; padding: 20px; border-radius: 30px 30px 0 0; box-shadow: 0 -10px 25px rgba(0,0,0,0.05); display: flex; gap: 15px; box-sizing: border-box; z-index: 100; }
+        .btn-action { flex: 1; border: none; padding: 18px; border-radius: 18px; font-weight: 800; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-save { background: white; color: var(--primary); border: 2px solid var(--primary); }
+        .btn-print { background: var(--primary); color: white; box-shadow: 0 6px 15px rgba(78, 205, 196, 0.3); }
+    </style>
+</head>
+<body>
+
+    <header class="top-bar-app">
+        <button class="btn-back-nav" onclick="window.location.href='consulta.html?petId='+petId+'&tutorId='+tutorId">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <span style="font-weight: 800; font-size: 1.1rem;">DRA. NATÁLIA MONTEIRO</span>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <label class="label-v">SELECIONAR MODELO</label>
+            <select id="selectModelos" onchange="carregarTemplate(this.value)">
+                <option value="">-- Escolha um modelo --</option>
+                <option value="OUTRO">+ Criar novo documento (Outro)</option>
+            </select>
+            <input type="text" id="inputTituloManual" placeholder="Título do Documento" style="display:none;">
+        </div>
+
+        <div class="card">
+            <label class="label-v">OPÇÕES DE IMPRESSÃO</label>
+            <div class="check-group">
+                <input type="checkbox" id="checkAssTutor" checked> 
+                <label for="checkAssTutor">Assinatura do Tutor (com CPF)</label>
+            </div>
+            <div class="check-group">
+                <input type="checkbox" id="checkAssVet" checked> 
+                <label for="checkAssVet">Assinatura Veterinária</label>
+            </div>
+            <div class="check-group">
+                <input type="checkbox" id="checkData" checked> 
+                <label for="checkData">Incluir Local e Data (Magé, ...)</label>
+            </div>
+        </div>
+
+        <div class="card">
+            <label class="label-v">TAGS RÁPIDAS (CLIQUE PARA INSERIR)</label>
+            <div class="tags-container">
+                <button class="tag-btn" onclick="inserirTag('{TUTOR}')">{TUTOR}</button>
+                <button class="tag-btn" onclick="inserirTag('{CPF}')">{CPF}</button>
+                <button class="tag-btn" onclick="inserirTag('{ANIMAL}')">{ANIMAL}</button>
+                <button class="tag-btn" onclick="inserirTag('{ESPECIE}')">{ESPECIE}</button>
+                <button class="tag-btn" onclick="inserirTag('{RACA}')">{RACA}</button>
+                <button class="tag-btn" onclick="inserirTag('{DATA}')">{DATA}</button>
+            </div>
+            <textarea id="areaTexto" style="height: 350px;" placeholder="Escreva o texto aqui..."></textarea>
+        </div>
+    </div>
+
+    <div class="footer-fixo">
+        <button class="btn-action btn-save" onclick="salvarNaTimeline()"><i class="fas fa-save"></i> SALVAR</button>
+        <button class="btn-action btn-print" onclick="processarImpressao()"><i class="fas fa-print"></i> IMPRIMIR</button>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+
+    <script>
+        var params = new URLSearchParams(window.location.search);
+        var petId = params.get("petId");
+        var tutorId = params.get("tutorId");
+        var dadosPet = {};
+        var dadosTutor = {};
+        var modelosDB = {};
+
+        window.onload = async function() {
+            try {
+                const tSnap = await db.collection("clientes").doc(tutorId).get();
+                dadosTutor = tSnap.data();
+                const pSnap = await db.collection("clientes").doc(tutorId).collection("pets").doc(petId).get();
+                dadosPet = pSnap.data();
+                const mSnap = await db.collection("modelos_documentos").get();
+                const select = document.getElementById("selectModelos");
+                mSnap.forEach(doc => {
+                    modelosDB[doc.id] = doc.data();
+                    let opt = document.createElement("option");
+                    opt.value = doc.id;
+                    opt.text = doc.data().titulo;
+                    select.add(opt);
+                });
+            } catch (e) { console.error(e); }
+        };
+
+        function inserirTag(tag) {
+            const area = document.getElementById("areaTexto");
+            const start = area.selectionStart;
+            const texto = area.value;
+            area.value = texto.substring(0, start) + tag + texto.substring(area.selectionEnd);
+            area.focus();
+        }
+
+        function carregarTemplate(val) {
+            const inputTit = document.getElementById("inputTituloManual");
+            const area = document.getElementById("areaTexto");
+            if (val === "OUTRO") {
+                inputTit.style.display = "block";
+                inputTit.value = "";
+                area.value = "";
+            } else if (val !== "") {
+                inputTit.style.display = "none";
+                area.value = modelosDB[val].template;
+            }
+        }
+
+        async function salvarNaTimeline() {
+            const textoOriginal = document.getElementById("areaTexto").value;
+            if (!textoOriginal) return alert("Escreva o texto antes de salvar.");
+            
+            const idSel = document.getElementById("selectModelos").value;
+            const titulo = idSel === "OUTRO" ? document.getElementById("inputTituloManual").value : (modelosDB[idSel] ? modelosDB[idSel].titulo : "Documento");
+
+            try {
+                await db.collection("clientes").doc(tutorId).collection("pets").doc(petId).collection("historico").add({
+                    tipo: "exame", // Usamos 'exame' para manter o ícone de olho/visualização na timeline
+                    data: new Date().toISOString(),
+                    descricao: "📄 " + titulo,
+                    template_gerado: textoOriginal, // Salva o texto para reimpressão
+                    titulo_doc: titulo,
+                    isDocumento: true
+                });
+                alert("Documento salvo na timeline do pet!");
+            } catch (e) { alert("Erro ao salvar."); }
+        }
+
+        async function processarImpressao() {
+            const textoOriginal = document.getElementById("areaTexto").value;
+            if (!textoOriginal) return alert("Por favor, selecione ou escreva o texto.");
+            
+            let textoFinal = textoOriginal;
+            const dataHoje = new Date().toLocaleDateString("pt-BR");
+            textoFinal = textoFinal.replace(/{TUTOR}/gi, dadosTutor.nome || "---");
+            textoFinal = textoFinal.replace(/{CPF}/gi, dadosTutor.cpf || "---");
+            textoFinal = textoFinal.replace(/{ANIMAL}|{PET}/gi, dadosPet.nome || "---");
+            textoFinal = textoFinal.replace(/{ESPECIE}/gi, dadosPet.especie || "---");
+            textoFinal = textoFinal.replace(/{RACA}/gi, dadosPet.raca || "---");
+            textoFinal = textoFinal.replace(/{DATA}/gi, dataHoje);
+
+            gerarPDF(textoFinal);
+        }
+
+        function gerarPDF(texto) {
+            const assTutor = document.getElementById("checkAssTutor").checked;
+            const assVet = document.getElementById("checkAssVet").checked;
+            const incluirData = document.getElementById("checkData").checked;
+            const idSel = document.getElementById("selectModelos").value;
+            const titulo = idSel === "OUTRO" ? document.getElementById("inputTituloManual").value : (modelosDB[idSel] ? modelosDB[idSel].titulo : "DOCUMENTO");
+
+            let htmlArr = [
+                "\x3Chtml\x3E\x3Chead\x3E\x3Cstyle\x3E",
+                "body{margin:0;font-family:sans-serif;}.bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;}",
+                ".content{padding:180px 60px; line-height:1.6; text-align:justify; font-size:16px;}",
+                "h2{text-align:center; text-transform:uppercase; margin-bottom:30px;}",
+                ".ass-area{margin-top:60px; display:flex; justify-content:space-between;}",
+                ".linha{border-top:1px solid #000; width:45%; text-align:center; padding-top:10px; font-size:14px; margin-top:40px;}",
+                "\x3C/style\x3E\x3C/head\x3E\x3Cbody\x3E",
+                "\x3Cimg src='assets/receita_bg.jpg' class='bg' /\x3E",
+                "\x3Cdiv class='content'\x3E",
+                "\x3Ch2\x3E" + titulo + "\x3C/h2\x3E",
+                "\x3Cdiv\x3E" + texto.replace(/\n/g, "\x3Cbr\x3E") + "\x3C/div\x3E"
+            ];
+
+            if (incluirData) htmlArr.push("\x3Cp style='text-align:right; margin-top:40px;'\x3EMagé, " + new Date().toLocaleDateString("pt-BR") + "\x3C/p\x3E");
+
+            if (assTutor || assVet) {
+                htmlArr.push("\x3Cdiv class='ass-area'\x3E");
+                if (assTutor) htmlArr.push("\x3Cdiv class='linha'\x3EAssinatura do Tutor\x3Cbr\x3E" + (dadosTutor.nome || "") + "\x3Cbr\x3ECPF: " + (dadosTutor.cpf || "---") + "\x3C/div\x3E");
+                if (assVet) htmlArr.push("\x3Cdiv class='linha'\x3EMédico(a) Veterinário(a)\x3Cbr\x3ENatalia Monteiro\x3Cbr\x3ECRMV-RJ\x3C/div\x3E");
+                htmlArr.push("\x3C/div\x3E");
+            }
+
+            htmlArr.push("\x3C/div\x3E");
+            htmlArr.push("\x3Cscript\x3Ewindow.onload=function(){window.focus();window.print();setTimeout(function(){window.close();},500);}\x3C/script\x3E");
+            htmlArr.push("\x3C/body\x3E\x3C/html\x3E");
+
+            const win = window.open("", "_blank");
+            win.document.write(htmlArr.join(""));
+            win.document.close();
+        }
+    </script>
+</body>
+</html>

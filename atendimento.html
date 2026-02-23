@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#4ECDC4">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Atendimentos - Dra Natalia Monteiro</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --primary: #4ECDC4;    /* Verde Água */
+            --secondary: #FF6B6B;  /* Coral */
+            --bg-app: #F7F9FC;
+            --card-white: #FFFFFF;
+            --text-main: #2D3436;
+            --text-muted: #636e72;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Roboto, sans-serif; 
+            background-color: var(--bg-app); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding-bottom: 30px; 
+        }
+
+        /* Top Bar degradê padrão Happy Pet */
+        .top-bar-app {
+            background: linear-gradient(135deg, var(--primary), #45b7af);
+            padding: 30px 25px 20px 25px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-radius: 0 0 25px 25px;
+            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .btn-back { 
+            background: rgba(255,255,255,0.2); 
+            border: none; 
+            color: white; 
+            width: 38px; 
+            height: 38px; 
+            border-radius: 12px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+        }
+
+        .container { padding: 20px; max-width: 800px; margin: 0 auto; }
+        
+        /* Busca Estilizada */
+        .secao-busca { margin-bottom: 25px; position: relative; }
+        .input-group { position: relative; width: 100%; }
+        .input-group i { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--primary); font-size: 1.1rem; }
+        .input-busca { 
+            width: 100%; 
+            padding: 16px 16px 16px 50px; 
+            border: none; 
+            border-radius: 18px; 
+            font-size: 1rem; 
+            box-sizing: border-box; 
+            outline: none; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+            font-weight: 500;
+        }
+
+        /* Lista de Sugestões */
+        .lista-sugestoes { 
+            display: none; 
+            position: absolute; 
+            top: 100%; 
+            left: 0; 
+            width: 100%; 
+            background: var(--card-white); 
+            border-radius: 15px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+            margin-top: 8px; 
+            z-index: 10; 
+            max-height: 300px; 
+            overflow-y: auto; 
+            border: 1px solid #f0f0f0;
+        }
+        .item-sugestao { padding: 15px 20px; border-bottom: 1px solid #f8f8f8; cursor: pointer; display: flex; align-items: center; gap: 12px; }
+        .item-sugestao:last-child { border-bottom: none; }
+        .tutor-nome-msg { color: var(--text-muted); font-size: 0.85rem; font-weight: normal; }
+
+        /* Títulos das Seções */
+        .secao-titulo { 
+            font-size: 1.1rem; 
+            font-weight: 800; 
+            margin: 25px 0 15px 5px; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            color: var(--text-main);
+        }
+
+        /* Grid e Cards de Atendimento */
+        .grid-cards { display: grid; grid-template-columns: 1fr; gap: 18px; }
+
+        .card-pet-atend { 
+            background: var(--card-white); 
+            border-radius: 22px; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+            box-shadow: 0 8px 20px rgba(149, 157, 165, 0.06);
+            border-left: 8px solid var(--primary);
+        }
+
+        .card-atend-header { display: flex; justify-content: space-between; align-items: center; }
+        
+        .hora-badge { 
+            background: #E0F7F5; 
+            color: #1A938A; 
+            padding: 5px 12px; 
+            border-radius: 10px; 
+            font-weight: 800; 
+            font-size: 0.85rem; 
+        }
+
+        .bairro-info { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
+
+        .info-pet-main h3 { margin: 0; font-size: 1.3rem; font-weight: 800; color: var(--text-main); }
+        .info-pet-main p { margin: 2px 0 0 0; font-size: 0.95rem; color: var(--text-muted); font-weight: 500; }
+
+        .servico-tag { 
+            font-size: 0.85rem; 
+            color: #d63031; 
+            background: #fff5f5; 
+            padding: 8px 12px; 
+            border-radius: 10px; 
+            margin-top: 5px;
+            display: inline-block;
+            font-weight: 600;
+        }
+
+        .btn-iniciar { 
+            width: 100%; 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 15px; 
+            border-radius: 15px; 
+            font-size: 0.95rem; 
+            font-weight: 800; 
+            cursor: pointer; 
+            margin-top: 10px; 
+            box-shadow: 0 6px 15px rgba(78, 205, 196, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="top-bar-app">
+        <button class="btn-back" onclick="window.location.href='home.html'"><i class="fas fa-chevron-left"></i></button>
+        <h1 style="margin:0; font-size: 1.3rem; font-weight: 900;">Atendimentos - Dra Natalia Monteiro</h1>
+    </header>
+
+    <div class="container">
+        <div class="secao-busca">
+            <div class="input-group">
+                <i class="fas fa-search"></i>
+                <input type="text" id="inputBusca" class="input-busca" placeholder="Buscar por paciente ou tutor..." onkeyup="buscarPetsReal()">
+            </div>
+            <div id="listaSugestoes" class="lista-sugestoes"></div>
+        </div>
+
+        <div class="secao-agendados">
+            <h2 class="secao-titulo"><i class="fas fa-clock" style="color: var(--secondary);"></i> Próximos de Hoje</h2>
+            <div class="grid-cards" id="gridAgendados">
+                <p style="color:var(--text-muted); padding:20px; text-align:center;">Buscando agenda do dia...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+
+    <script>
+        let timeoutBusca;
+        const hojeIso = new Date().toLocaleDateString('en-CA'); // Padrão YYYY-MM-DD
+
+        window.onload = carregarAgendadosHoje;
+
+        async function carregarAgendadosHoje() {
+            const grid = document.getElementById('gridAgendados');
+            grid.innerHTML = "<p style='text-align:center; color:var(--text-muted); padding:20px;'>Carregando pacientes...</p>";
+
+            try {
+                const snap1 = await db.collection("agenda").where("data", "==", hojeIso).get();
+                const snap2 = await db.collection("agendamentos").where("data", "==", hojeIso).get();
+
+                let listaUnificada = [];
+                snap1.forEach(doc => { let d = doc.data(); d.id = doc.id; listaUnificada.push(d); });
+                snap2.forEach(doc => { let d = doc.data(); d.id = doc.id; listaUnificada.push(d); });
+
+                if (listaUnificada.length === 0) {
+                    grid.innerHTML = `
+                        <div style="text-align:center; padding:40px; color:var(--text-muted);">
+                            <i class="fas fa-calendar-check" style="font-size:3rem; opacity:0.1; margin-bottom:10px;"></i>
+                            <p>Tudo em dia! Nenhum agendamento para hoje.</p>
+                        </div>`;
+                    return;
+                }
+
+                listaUnificada.sort((a, b) => (a.hora || "").localeCompare(b.hora || ""));
+
+                grid.innerHTML = "";
+                listaUnificada.forEach(ag => {
+                    const card = document.createElement("div");
+                    card.className = "card-pet-atend";
+                    
+                    const pId = ag.petId || "";
+                    const tId = ag.tutorId || "";
+                    
+                    const telLimpo = ag.telefone ? ag.telefone.replace(/\D/g, "") : "";
+                    const linkZap = telLimpo ? `https://wa.me/55${telLimpo}?text=Olá! Aqui é a Dra. Natália. Estou a caminho para o atendimento.` : "#";
+
+                    card.innerHTML = `
+                        <div class="card-atend-header">
+                            <span class="hora-badge">${ag.hora || '--:--'}</span>
+                            <div style="display:flex; gap:12px; align-items:center;">
+                                <span class="bairro-info">${ag.bairro || 'Magé'}</span>
+                                ${telLimpo ? `<a href="${linkZap}" target="_blank" style="color: #25D366; font-size: 1.4rem;"><i class="fab fa-whatsapp"></i></a>` : ''}
+                            </div>
+                        </div>
+                        
+                        <div class="info-pet-main">
+                            <h3>${ag.petNome || 'Paciente'}</h3>
+                            <p>Tutor: ${ag.tutorNome || 'Cliente'}</p>
+                        </div>
+                        
+                        <div>
+                            <span class="servico-tag"><i class="fas fa-notes-medical"></i> ${ag.servico || ag.observacoes || 'Consulta'}</span>
+                        </div>
+                        
+                        <button class="btn-iniciar" onclick="irParaConsulta('${pId}', '${tId}')">
+                            <i class="fas fa-stethoscope"></i> INICIAR ATENDIMENTO
+                        </button>
+                    `;
+                    grid.appendChild(card);
+                });
+
+            } catch (e) {
+                console.error(e);
+                grid.innerHTML = "<p style='color:red; text-align:center;'>Erro ao carregar atendimentos.</p>";
+            }
+        }
+
+        function buscarPetsReal() {
+            clearTimeout(timeoutBusca);
+            const termo = document.getElementById('inputBusca').value.toLowerCase();
+            const lista = document.getElementById('listaSugestoes');
+            
+            if (termo.length < 2) {
+                lista.style.display = 'none';
+                return;
+            }
+
+            timeoutBusca = setTimeout(async () => {
+                lista.innerHTML = "<div class='item-sugestao'>Buscando...</div>";
+                lista.style.display = 'block';
+
+                try {
+                    const snapshot = await db.collection('clientes').get();
+                    let html = '';
+
+                    for (const docTutor of snapshot.docs) {
+                        const tutor = docTutor.data();
+                        const petsSnap = await db.collection('clientes').doc(docTutor.id).collection('pets').get();
+                        
+                        petsSnap.forEach(docPet => {
+                            const pet = docPet.data();
+                            if (pet.nome.toLowerCase().includes(termo) || tutor.nome.toLowerCase().includes(termo)) {
+                                html += `
+                                    <div class="item-sugestao" onclick="irParaConsulta('${docPet.id}', '${docTutor.id}')">
+                                        <i class="fas fa-paw" style="color:var(--primary)"></i>
+                                        <span><strong>${pet.nome}</strong> <span class="tutor-nome-msg">(${tutor.nome})</span></span>
+                                    </div>`;
+                            }
+                        });
+                    }
+                    lista.innerHTML = html || "<div class='item-sugestao'>Nenhum paciente encontrado.</div>";
+                } catch (e) { console.error(e); }
+            }, 500);
+        }
+
+        function irParaConsulta(petId, tutorId) {
+            if(!petId || !tutorId || petId === "undefined") {
+                alert("Dados incompletos. Por favor, acesse via Agenda ou busque novamente.");
+                return;
+            }
+            window.location.href = `consulta.html?petId=${petId}&tutorId=${tutorId}`;
+        }
+    </script>
+</body>
+</html>

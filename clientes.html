@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#4ECDC4">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tutores - Dra. Natalia Monteiro</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --primary: #4ECDC4;
+            --secondary: #FF6B6B;
+            --bg-app: #F7F9FC;
+            --card-white: #FFFFFF;
+            --text-main: #2D3436;
+            --text-muted: #636e72;
+            --danger: #FF6B6B;
+        }
+
+        body { 
+            background-color: var(--bg-app); 
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            color: var(--text-main);
+        }
+
+        /* Top Bar Degradê */
+        .top-bar-app {
+            background: linear-gradient(135deg, var(--primary), #45b7af);
+            padding: 30px 25px 20px 25px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-radius: 0 0 25px 25px;
+            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2);
+        }
+
+        .btn-back { background: rgba(255,255,255,0.2); border: none; color: white; width: 35px; height: 35px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+        /* Ações Principais */
+        .main-actions-premium {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            padding: 20px;
+        }
+
+        .btn-action-p {
+            background: white;
+            border: none;
+            padding: 15px 5px;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: var(--text-main);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+            cursor: pointer;
+        }
+        .btn-action-p i { font-size: 1.2rem; color: var(--primary); }
+        .btn-action-p.bg-light-green { background: #E0F7F5; }
+
+        /* Seções e Carrosséis */
+        .section-container { margin: 25px 0; padding: 0 20px; }
+        
+        .section-header { 
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; 
+        }
+        
+        .title-section { font-size: 1.1rem; font-weight: 900; margin: 0; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+        .text-red { color: var(--secondary); }
+
+        .badge-count { background: var(--secondary); color: white; padding: 4px 10px; border-radius: 10px; font-size: 0.8rem; font-weight: 800; }
+
+        .carousel-snap { 
+            display: flex; overflow-x: auto; gap: 15px; padding: 5px 5px 15px 5px; 
+            scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+        }
+        .carousel-snap::-webkit-scrollbar { display: none; }
+
+        /* Cards do Carrossel */
+        .card-mini-premium { 
+            min-width: 180px; background: white; border-radius: 20px; padding: 18px; 
+            box-shadow: 0 6px 15px rgba(0,0,0,0.04); border-left: 6px solid var(--primary);
+            flex-shrink: 0; scroll-snap-align: start; cursor: pointer;
+        }
+        .card-mini-premium.border-red { border-left-color: var(--secondary); }
+        .card-mini-premium strong { display: block; font-size: 1rem; margin-bottom: 5px; color: var(--text-main); }
+        .card-mini-premium span { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; display: block; }
+
+        /* Modal de Busca */
+        .modal-full-premium {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-app); z-index: 2000; display: none;
+            flex-direction: column;
+        }
+        .modal-full-premium.active { display: flex; }
+        .search-input-box { padding: 15px; background: white; border-radius: 0 0 25px 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .input-premium { width: 100%; padding: 15px; border: 1px solid #EEE; border-radius: 15px; font-size: 1rem; outline: none; background: #F9F9F9; }
+        .item-busca-p { background: white; margin-bottom: 10px; padding: 15px; border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+    </style>
+</head>
+<body>
+
+    <header class="top-bar-app">
+        <button class="btn-back" onclick="window.location.href='home.html'"><i class="fas fa-chevron-left"></i></button>
+        <h2 style="margin:0; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.5px;">Clientes - Dra Natalia Monteiro</h2>
+    </header>
+
+    <div class="main-actions-premium">
+        <button class="btn-action-p" onclick="window.location.href='novo_cliente.html'">
+            <i class="fas fa-user-plus"></i> NOVO TUTOR
+        </button>
+        <button class="btn-action-p" onclick="abrirBusca()">
+            <i class="fas fa-search"></i> BUSCAR
+        </button>
+        <button class="btn-action-p bg-light-green" onclick="location.reload()">
+            <i class="fas fa-sync"></i> ATUALIZAR
+        </button>
+    </div>
+
+    <main class="container-app">
+        
+        <section class="section-container">
+            <div class="section-header">
+                <h3 class="title-section"><i class="fas fa-calendar-check" style="color:var(--primary)"></i> Visitas Hoje</h3>
+                <span class="badge-count" id="countAgendados">0</span>
+            </div>
+            <div class="carousel-snap" id="listaAgendados">
+                <p style="padding: 20px; color: var(--text-muted); font-size: 0.9rem;">Buscando agenda...</p>
+            </div>
+        </section>
+
+        <section class="section-container">
+            <h3 class="title-section text-red"><i class="fas fa-syringe"></i> Vacinas Vencidas</h3>
+            <div class="carousel-snap" id="listaVacinasVencidas">
+                <p style="padding: 10px; font-size: 0.8rem; color: var(--text-muted);">Verificando...</p>
+            </div>
+        </section>
+
+        <section class="section-container">
+            <h3 class="title-section text-red"><i class="fas fa-hand-holding-usd"></i> Pendências</h3>
+            <div class="carousel-snap" id="listaDebitos">
+                <p style="padding: 10px; font-size: 0.8rem; color: var(--text-muted);">Verificando...</p>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="modalBusca" class="modal-full-premium">
+        <header class="top-bar-app">
+            <button class="btn-back" onclick="fecharBusca()"><i class="fas fa-times"></i></button>
+            <h3 style="margin:0; font-size: 1.1rem;">Buscar Cliente ou Pet</h3>
+        </header>
+        <div class="search-input-box">
+            <input type="text" id="inputBusca" class="input-premium" placeholder="Nome do tutor, pet ou CPF..." onkeyup="filtrarClientes()">
+        </div>
+        <div id="listaResultadosBusca" style="padding: 20px; overflow-y: auto; flex: 1;">
+            <p style="text-align: center; color: var(--text-muted);">Digite para pesquisar...</p>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+
+    <script>
+        /* global db */
+        const hoje = new Date().toLocaleDateString('en-CA'); 
+
+        window.onload = function() {
+            carregarDashboard();
+        };
+
+        async function carregarDashboard() {
+            try {
+                const containerAgenda = document.getElementById("listaAgendados");
+                const containerVacinas = document.getElementById("listaVacinasVencidas");
+                const containerDebitos = document.getElementById("listaDebitos");
+                const countBadge = document.getElementById("countAgendados");
+                
+                containerAgenda.innerHTML = "";
+                containerVacinas.innerHTML = "";
+                containerDebitos.innerHTML = "";
+
+                // 1. CARREGAR ATENDIMENTOS DE HOJE
+                const snapAgenda = await db.collection("agenda").where("data", "==", hoje).get();
+                const snapAgenda2 = await db.collection("agendamentos").where("data", "==", hoje).get();
+
+                let atendimentosHoje = [];
+                snapAgenda.forEach(doc => atendimentosHoje.push({id: doc.id, ...doc.data()}));
+                snapAgenda2.forEach(doc => atendimentosHoje.push({id: doc.id, ...doc.data()}));
+
+                atendimentosHoje.sort((a, b) => (a.hora || "").localeCompare(b.hora || ""));
+                countBadge.innerText = atendimentosHoje.length;
+
+                if (atendimentosHoje.length === 0) {
+                    containerAgenda.innerHTML = "<p style='padding: 20px; color: var(--text-muted); font-size:0.9rem;'>Nenhum agendamento.</p>";
+                } else {
+                    atendimentosHoje.forEach(ag => {
+                        const div = document.createElement("div");
+                        div.className = "card-mini-premium";
+                        div.onclick = () => window.location.href = `consulta.html?petId=${ag.petId}&tutorId=${ag.tutorId}`;
+                        div.innerHTML = `
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <span style="color:var(--primary); font-weight:900; font-size:0.85rem;">${ag.hora || '--:--'}</span>
+                                <small style="font-weight:800; color:var(--text-muted); font-size:0.65rem; text-transform:uppercase;">${ag.bairro || ''}</small>
+                            </div>
+                            <strong>${ag.petNome}</strong>
+                            <span>${ag.tutorNome}</span>
+                        `;
+                        containerAgenda.appendChild(div);
+                    });
+                }
+
+                // 2. BUSCAR DÉBITOS
+                const devedoresSnap = await db.collection("clientes").where("total_pendencia", ">", 0).get();
+                if (devedoresSnap.empty) {
+                    containerDebitos.innerHTML = "<p style='padding:10px; font-size:0.8rem; color:gray;'>Nenhuma pendência.</p>";
+                }
+                devedoresSnap.forEach(docTutor => {
+                    const tutor = docTutor.data();
+                    renderizarPremiumCard(containerDebitos, tutor.nome, "Débito: R$ " + tutor.total_pendencia.toFixed(2), docTutor.id, "", true);
+                });
+
+                // 3. BUSCAR VACINAS
+                const clientesSnap = await db.collection("clientes").get();
+                clientesSnap.forEach(async (docTutor) => {
+                    const petsSnap = await db.collection("clientes").doc(docTutor.id).collection("pets").get();
+                    petsSnap.forEach(docPet => {
+                        const pet = docPet.data();
+                        if (pet.data_revacina && pet.data_revacina < hoje) {
+                            renderizarPremiumCard(containerVacinas, pet.nome, "Venceu em " + pet.data_revacina.split('-').reverse().join('/'), docTutor.id, docPet.id, true);
+                        }
+                    });
+                });
+
+            } catch (e) { console.error(e); }
+        }
+
+        function renderizarPremiumCard(container, titulo, sub, tId, pId, isRed) {
+            const div = document.createElement("div");
+            div.className = isRed ? "card-mini-premium border-red" : "card-mini-premium";
+            div.onclick = () => {
+                window.location.href = pId ? `consulta.html?petId=${pId}&tutorId=${tId}` : `perfil_cliente.html?tutorId=${tId}`;
+            };
+            div.innerHTML = `<strong>${titulo}</strong><span>${sub}</span>`;
+            container.appendChild(div);
+        }
+
+        function abrirBusca() { document.getElementById("modalBusca").classList.add("active"); }
+        function fecharBusca() { document.getElementById("modalBusca").classList.remove("active"); }
+
+        async function filtrarClientes() {
+            const termo = document.getElementById("inputBusca").value.toLowerCase();
+            if(termo.length < 3) return;
+            const res = document.getElementById("listaResultadosBusca");
+            res.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>Buscando...</p>";
+            
+            const snap = await db.collection("clientes").get();
+            res.innerHTML = "";
+
+            snap.forEach(async (docTutor) => {
+                const tutor = docTutor.data();
+                if (tutor.nome.toLowerCase().includes(termo) || (tutor.cpf && tutor.cpf.includes(termo))) {
+                    const pSnap = await db.collection("clientes").doc(docTutor.id).collection("pets").get();
+                    pSnap.forEach(docPet => {
+                        const pet = docPet.data();
+                        const div = document.createElement("div");
+                        div.className = "item-busca-p";
+                        div.onclick = () => window.location.href = `perfil_cliente.html?tutorId=${docTutor.id}`;
+                        div.innerHTML = `<strong style="color:var(--primary);">${pet.nome}</strong><br><small>Tutor: ${tutor.nome}</small>`;
+                        res.appendChild(div);
+                    });
+                }
+            });
+        }
+    </script>
+</body>
+</html>
