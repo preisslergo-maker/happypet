@@ -7,7 +7,6 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 
-    <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#4ECDC4">
@@ -206,7 +205,7 @@
     </div>
 
     <main class="container-agenda" id="listaAgenda">
-        <p style='text-align:center; color:var(--text-muted); padding:20px;'>Carregando...</p>
+        <p style='text-align:center; color:var(--text-muted); padding:20px;'><i class='fas fa-spinner fa-spin'></i> Carregando...</p>
     </main>
 
     <div class="area-botao">
@@ -221,24 +220,24 @@
     <script src="js/firebase-config.js"></script>
 
     <script>
-        // 1. ARRUMA A TELA IMEDIATAMENTE (O visual carrega rápido)
-        window.onload = () => {
-            const dataHoje = new Date();
-            const offset = dataHoje.getTimezoneOffset();
-            const hojeFmt = new Date(dataHoje.getTime() - (offset*60*1000)).toISOString().split('T')[0];
-            
+        // Função para preencher a data ANTES de buscar no banco
+        function garantirDataPreenchida() {
             const inputFiltro = document.getElementById('filtroData');
             if(inputFiltro && !inputFiltro.value) {
+                const dataHoje = new Date();
+                const offset = dataHoje.getTimezoneOffset();
+                const hojeFmt = new Date(dataHoje.getTime() - (offset*60*1000)).toISOString().split('T')[0];
                 inputFiltro.value = hojeFmt;
             }
-        };
+        }
 
-        // 2. O LEÃO DE CHÁCARA E A BUSCA SEGURA
+        // O LEÃO DE CHÁCARA (Agora ele organiza a ordem certa das coisas)
         firebase.auth().onAuthStateChanged((user) => {
             if (user) {
-                carregarAgenda();
+                garantirDataPreenchida(); // 1. Garante que a data tem um valor
+                carregarAgenda();         // 2. Faz a busca com segurança e sem travar
             } else {
-                window.location.href = 'index.html';
+                window.location.href = 'index.html'; // 3. Sem login? Expulso!
             }
         });
 
@@ -251,7 +250,10 @@
                 return;
             }
 
-            container.innerHTML = "<p style='text-align:center; color:var(--text-muted); margin-top:20px;'>Buscando atendimentos...</p>";
+            // Trava de segurança extra para evitar erro do banco
+            if (!dataSel) return;
+
+            container.innerHTML = "<p style='text-align:center; color:var(--text-muted); margin-top:20px;'><i class='fas fa-spinner fa-spin'></i> Buscando atendimentos...</p>";
 
             try {
                 const snap1 = await db.collection("agenda").where("data", "==", dataSel).get();
