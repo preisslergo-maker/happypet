@@ -115,20 +115,30 @@ const Utils = {
 
     
     // --- BUSCA DE CEP (ViaCEP) ---
-    consultarCEP: async (cep) => {
+    // --- BUSCA DE CEP (ViaCEP) - Versão Anti-Bloqueio CORS ---
+    consultarCEP: (cep, callback) => {
         const limpo = cep.replace(/\D/g, '');
-        if (limpo.length !== 8) return null;
+        if (limpo.length !== 8) return;
+
+        // Criamos um nome único para a função de retorno (callback)
+        const callbackName = 'viacep_callback_' + Math.floor(Math.random() * 100000);
         
-        try {
-            const res = await fetch(`https://viacep.com.br/ws/${limpo}/json/`);
-            const data = await res.json();
-            if (data.erro) return null;
-            return data;
-        } catch (e) {
-            console.error("Erro CEP:", e);
-            return null;
-        }
+        // Criamos essa função no objeto window para o ViaCEP encontrar
+        window[callbackName] = (dados) => {
+            callback(dados);
+            delete window[callbackName]; // Limpa a memória
+            document.body.removeChild(script); // Remove o lixo do HTML
+        };
+
+        // Injetamos um script no HTML para buscar o dado (pula o CORS)
+        const script = document.createElement('script');
+        script.src = `https://viacep.com.br/ws/${limpo}/json/?callback=${callbackName}`;
+        document.body.appendChild(script);
     },
+
+
+
+    
 
     // --- OTIMIZADOR DE IMAGEM (Redimensiona e Comprime) ---
     comprimirImagem: (file, maxWidth = 800) => {
