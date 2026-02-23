@@ -1,10 +1,10 @@
 const firebaseConfig = {
-  apiKey: "AIzaSyB12ZGGdhmBHmLpG0zcaLPaj-aFPlcAfNI",
-  authDomain: "vetfamily-b110a.firebaseapp.com",
-  projectId: "vetfamily-b110a",
-  storageBucket: "vetfamily-b110a.firebasestorage.app",
-  messagingSenderId: "262884239352",
-  appId: "1:262884239352:web:70cab5140db210811f580d"
+    apiKey: "AIzaSyB12ZGGdhmBHmLpG0zcaLPaj-aFPlcAfNI",
+    authDomain: "vetfamily-b110a.firebaseapp.com",
+    projectId: "vetfamily-b110a",
+    storageBucket: "vetfamily-b110a.firebasestorage.app",
+    messagingSenderId: "262884239352",
+    appId: "1:262884239352:web:70cab5140db210811f580d"
 };
 
 if (typeof firebase !== 'undefined') {
@@ -12,30 +12,20 @@ if (typeof firebase !== 'undefined') {
         firebase.initializeApp(firebaseConfig);
     }
 
-    // Exporta as globais de uma vez só
+    // Exporta as globais
     window.db = firebase.firestore();
     window.auth = firebase.auth();
     window.storage = typeof firebase.storage === 'function' ? firebase.storage() : null;
 
-    // --- TURBO PARA IPHONE E CONEXÃO LENTA ---
-    firebase.firestore().settings({
-        experimentalForceLongPolling: true, // Evita que o 4G/Safari trave a conexão
-        cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED // Melhora o acesso offline em Magé
+    // --- TURBO PARA 4G/SAFARI (Evita que o celular trave a conexão) ---
+    window.db.settings({
+        experimentalForceLongPolling: true,
+        merge: true
     });
 
-    // ATIVAÇÃO DO MODO OFFLINE
-    window.db.enablePersistence({ synchronizeTabs: true })
-        .then(() => console.log("✅ Happy Pet Online e Offline!"))
-        .catch((err) => {
-            if (err.code == 'failed-precondition') {
-                console.warn('Persistência: Use apenas uma aba por vez.');
-            } else {
-                console.error('Erro de persistência:', err.code);
-            }
-        });
+    // 🛑 A PERSISTÊNCIA OFFLINE FOI REMOVIDA PARA PARAR DE TRAVAR OS LINKS 🛑
 
-    console.log("🔥 Firebase Pronto.");
+    console.log("🔥 Firebase Pronto e Destravado!");
 } else {
     console.error("Firebase não carregado. Verifique os scripts no HTML.");
 }
-
