@@ -225,19 +225,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="js/firebase-config.js"></script>
     <script>
-        // 1. ESCUDO INVISÍVEL (Roda silencioso no fundo para proteger a página)
-        firebase.auth().onAuthStateChanged((user) => {
-            if (!user) {
-                window.location.href = 'index.html';
-            }
-        });
-
-        // 2. CARREGAMENTO IMEDIATO (Puxa os dados do cache do celular na velocidade da luz)
+        // 1. ARRUMA A TELA INSTANTANEAMENTE (Para não parecer que está travado)
         window.onload = () => {
-            inicializarAgenda();
-        };
-
-        function inicializarAgenda() {
             const dataHoje = new Date();
             const offset = dataHoje.getTimezoneOffset();
             const hojeFmt = new Date(dataHoje.getTime() - (offset*60*1000)).toISOString().split('T')[0];
@@ -246,9 +235,19 @@
             if(inputFiltro && !inputFiltro.value) {
                 inputFiltro.value = hojeFmt;
             }
-            carregarAgenda(); // Vai no Firebase (que vai ler do offline primeiro!)
-        }
+        };
 
+        // 2. ESCUDO E BUSCA SEGURA (Só busca quando tem certeza do login)
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                // Agora que o Firebase confirmou que ela tá logada, liberamos a busca!
+                carregarAgenda();
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
+        // 3. A BUSCA DOS DADOS (O resto continua igual)
         async function carregarAgenda() {
             const dataSel = document.getElementById('filtroData').value;
             const container = document.getElementById('listaAgenda');
@@ -262,7 +261,6 @@
             container.innerHTML = "<p style='text-align:center; color:var(--text-muted); margin-top:20px;'>Buscando atendimentos...</p>";
 
             try {
-                // Como habilitamos o offline no firebase-config.js, isso aqui responde instantaneamente no iPhone!
                 const [snap1, snap2] = await Promise.all([
                     db.collection("agenda").where("data", "==", dataSel).get(),
                     db.collection("agendamentos").where("data", "==", dataSel).get()
