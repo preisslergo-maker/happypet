@@ -225,34 +225,48 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="js/firebase-config.js"></script>
     <script>
-        // O iPhone só fará a busca quando tiver certeza de que a Natália está logada
+        // 1. ESCUDO INVISÍVEL (Roda silencioso no fundo para proteger a página)
         firebase.auth().onAuthStateChanged((user) => {
-            if (user) {
-                inicializarAgenda();
-            } else {
+            if (!user) {
                 window.location.href = 'index.html';
             }
         });
 
-        
-        // Fuso horário corrigido
+        // 2. CARREGAMENTO IMEDIATO (Puxa os dados do cache do celular na velocidade da luz)
         window.onload = () => {
+            inicializarAgenda();
+        };
+
+        function inicializarAgenda() {
             const dataHoje = new Date();
             const offset = dataHoje.getTimezoneOffset();
             const hojeFmt = new Date(dataHoje.getTime() - (offset*60*1000)).toISOString().split('T')[0];
             
-            document.getElementById('filtroData').value = hojeFmt;
-            carregarAgenda();
-        };
+            const inputFiltro = document.getElementById('filtroData');
+            if(inputFiltro && !inputFiltro.value) {
+                inputFiltro.value = hojeFmt;
+            }
+            carregarAgenda(); // Vai no Firebase (que vai ler do offline primeiro!)
+        }
 
         async function carregarAgenda() {
             const dataSel = document.getElementById('filtroData').value;
             const container = document.getElementById('listaAgenda');
+            
+            if (!window.db) {
+                console.error("Firebase db não está disponível.");
+                container.innerHTML = "<p style='text-align:center; color:red;'>Erro na inicialização do banco.</p>";
+                return;
+            }
+
             container.innerHTML = "<p style='text-align:center; color:var(--text-muted); margin-top:20px;'>Buscando atendimentos...</p>";
 
             try {
-                const snap1 = await db.collection("agenda").where("data", "==", dataSel).get();
-                const snap2 = await db.collection("agendamentos").where("data", "==", dataSel).get();
+                // Como habilitamos o offline no firebase-config.js, isso aqui responde instantaneamente no iPhone!
+                const [snap1, snap2] = await Promise.all([
+                    db.collection("agenda").where("data", "==", dataSel).get(),
+                    db.collection("agendamentos").where("data", "==", dataSel).get()
+                ]);
 
                 let listaUnificada = [];
 
