@@ -185,7 +185,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="js/firebase-config.js"></script>
 
-<script>
+    <script>
         // 1. CARREGAMENTO INSTANTÂNEO (Puxa da memória do iPhone na hora)
         window.onload = () => {
             const nomeSalvo = localStorage.getItem('nomeDra');
@@ -222,11 +222,6 @@
                 firebase.auth().signOut().then(() => { window.location.href = 'index.html'; });
             }
         }
-    </script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js');
-      }
     </script>
 </body>
 </html>
