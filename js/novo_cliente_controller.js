@@ -1,5 +1,5 @@
 /**
- * CONTROLLER - Novo Cadastro Happy Pet (Versão Final Destravada e Corrigida)
+ * CONTROLLER - Novo Cadastro Happy Pet (Versão Blindada contra erros de Cópia)
  */
 
 let tutorIdAtual = null;
@@ -11,20 +11,20 @@ const bancoRacas = {
     felino: ["SRD", "Siamês", "Persa", "Maine Coon", "Angorá", "Ragdoll", "Bengal"]
 };
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', async function() {
     await carregarCatalogoDoFirebase();
     configurarCEP();
     configurarEventosTutor();
     configurarEventosPet();
 });
 
-// --- BUSCA DE CEP AUTOMÁTICA (Versão Corrigida para Callback/JSONP) ---
+// --- BUSCA DE CEP AUTOMÁTICA ---
 function configurarCEP() {
     const cepInput = document.getElementById('cliCep');
     let buscandoAgora = false;
 
     if(cepInput) {
-        cepInput.addEventListener('blur', (e) => {
+        cepInput.addEventListener('blur', function(e) {
             const cep = e.target.value.replace(/\D/g, '');
             if(cep.length !== 8 || buscandoAgora) return;
 
@@ -38,7 +38,7 @@ function configurarCEP() {
 
             window[callbackName] = function(dados) {
                 if(dados && !dados.erro) {
-                    inputEnd.value = `${dados.logradouro}, ${dados.bairro}, ${dados.localidade} - ${dados.uf}`;
+                    inputEnd.value = dados.logradouro + ", " + dados.bairro + ", " + dados.localidade + " - " + dados.uf;
                     const inputNum = document.getElementById('cliNum');
                     if(inputNum) inputNum.focus();
                 } else {
@@ -50,7 +50,7 @@ function configurarCEP() {
                 document.body.removeChild(script);
             };
 
-            script.src = `https://viacep.com.br/ws/${cep}/json/?callback=${callbackName}`;
+            script.src = "https://viacep.com.br/ws/" + cep + "/json/?callback=" + callbackName;
             script.onerror = function() {
                 inputEnd.value = originalVal;
                 alert("Erro de conexão ao buscar CEP.");
@@ -61,7 +61,7 @@ function configurarCEP() {
             document.body.appendChild(script);
         });
 
-        cepInput.addEventListener('input', (e) => {
+        cepInput.addEventListener('input', function(e) {
             if(e.target.value === "") buscandoAgora = false;
         });
     }
@@ -71,11 +71,11 @@ function configurarCEP() {
 function configurarEventosTutor() {
     const cpfInput = document.getElementById('cliCpf');
     if(cpfInput) {
-        cpfInput.addEventListener('blur', async (e) => {
+        cpfInput.addEventListener('blur', async function(e) {
             const cpfLimpo = e.target.value.replace(/\D/g, '');
             
             if (cpfLimpo.length > 0 && typeof Utils !== 'undefined' && Utils.validarCPF && !Utils.validarCPF(cpfLimpo)) {
-                alert("⚠️ CPF Inválido! Por favor, verifique os números.");
+                alert("CPF Inválido! Por favor, verifique os números.");
                 e.target.style.borderColor = "red";
                 return;
             } else {
@@ -87,7 +87,7 @@ function configurarEventosTutor() {
                 const query = await db.collection('clientes').where('cpf', '==', cpfLimpo).get();
                 if(!query.empty) {
                     const dadosTutor = query.docs[0].data();
-                    if(confirm(`Tutor já cadastrado: ${dadosTutor.nome}.\n\nDeseja carregar estes dados para adicionar mais um pet?`)) {
+                    if(confirm("Tutor já cadastrado: " + dadosTutor.nome + ".\nDeseja carregar estes dados para adicionar mais um pet?")) {
                         tutorIdAtual = query.docs[0].id;
                         preencherCamposTutor(dadosTutor);
                         avancarParaPets();
@@ -97,7 +97,7 @@ function configurarEventosTutor() {
         });
     }
 
-    document.getElementById('formTutor').addEventListener('submit', async (e) => {
+    document.getElementById('formTutor').addEventListener('submit', async function(e) {
         e.preventDefault();
         const btn = document.getElementById('btnSalvarTutor');
         const cpfValor = document.getElementById('cliCpf').value.replace(/\D/g, '');
@@ -120,14 +120,14 @@ function configurarEventosTutor() {
             cep: document.getElementById('cliCep').value.replace(/\D/g, ''),
             endereco: document.getElementById('cliEndereco').value,
             numero: document.getElementById('cliNum').value,
-            bairro: document.getElementById('cliEndereco').value.split(',')[1]?.trim() || 'N/I',
+            bairro: document.getElementById('cliEndereco').value.split(',')[1] ? document.getElementById('cliEndereco').value.split(',')[1].trim() : 'N/I',
             saldo_devedor: 0,
             criadoEm: new Date().toISOString()
         };
 
         try {
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+            btn.innerHTML = 'Salvando...';
             
             if (tutorIdAtual) {
                 await db.collection('clientes').doc(tutorIdAtual).update(dados);
@@ -135,14 +135,14 @@ function configurarEventosTutor() {
                 const docRef = await db.collection('clientes').add(dados);
                 tutorIdAtual = docRef.id;
             }
-            alert("✅ Tutor salvo com sucesso! Agora cadastre o Pet.");
-            btn.innerHTML = '<i class="fas fa-check"></i> SALVO';
+            alert("Tutor salvo com sucesso! Agora cadastre o Pet.");
+            btn.innerHTML = 'SALVO';
             avancarParaPets();
         } catch (err) {
             console.error(err);
             alert("Erro ao salvar: " + err.message);
             btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-save"></i> TENTAR NOVAMENTE';
+            btn.innerHTML = 'TENTAR NOVAMENTE';
         }
     });
 }
@@ -152,7 +152,10 @@ async function carregarCatalogoDoFirebase() {
     try {
         const snapshot = await db.collection('catalogo_vacinas').get();
         if (!snapshot.empty) {
-            catalogoVacinasCache = snapshot.docs.map(doc => doc.data());
+            catalogoVacinasCache = [];
+            snapshot.forEach(function(doc) {
+                catalogoVacinasCache.push(doc.data());
+            });
         } else {
             throw new Error("Coleção vazia");
         }
@@ -160,7 +163,7 @@ async function carregarCatalogoDoFirebase() {
         catalogoVacinasCache = [
             { nome: 'V10', especie: 'canino', dias_reforco: 365 },
             { nome: 'Antirrábica', especie: 'ambos', dias_reforco: 365 },
-            { nome: 'V5 (Quíntupla Felina)', especie: 'felino', dias_reforco: 365 }
+            { nome: 'V5', especie: 'felino', dias_reforco: 365 }
         ];
     }
 }
@@ -173,31 +176,39 @@ function configurarEventosPet() {
     const inputDataDose = document.getElementById('dataVac');
 
     if(btnMostrarForm) {
-        btnMostrarForm.addEventListener('click', () => {
+        btnMostrarForm.addEventListener('click', function() {
             formPet.style.display = 'block';
             btnMostrarForm.style.display = 'none';
         });
     }
 
-    selEspecie.addEventListener('change', (e) => {
+    selEspecie.addEventListener('change', function(e) {
         const esp = e.target.value;
         const dlRacas = document.getElementById('listaRacasSugestao');
         
-        // AQUI ESTAVA O SEU BUG ANTES! AGORA ESTÁ 100% CORRIGIDO.
-        dlRacas.innerHTML = (bancoRacas[esp] || []).map(r => `<option value="${r}"></option>`).join('');
+        // MUDANÇA VITAL: Criação das opções de raça SEM usar textos que quebram
+        dlRacas.innerHTML = "";
+        const racasDaEspecie = bancoRacas[esp] || [];
+        for(let i = 0; i < racasDaEspecie.length; i++) {
+            const optRaca = document.createElement('option');
+            optRaca.value = racasDaEspecie[i];
+            dlRacas.appendChild(optRaca);
+        }
         
         selVacina.innerHTML = '<option value="">Selecione a vacina...</option>';
-        const vacinasFiltradas = catalogoVacinasCache.filter(v => v.especie === esp || v.especie === 'ambos');
-        vacinasFiltradas.forEach(v => {
-            const opt = document.createElement('option');
-            opt.value = v.nome;
-            opt.dataset.reforco = v.dias_reforco || 365;
-            opt.textContent = v.nome;
-            selVacina.appendChild(opt);
-        });
+        for(let i = 0; i < catalogoVacinasCache.length; i++) {
+            const v = catalogoVacinasCache[i];
+            if (v.especie === esp || v.especie === 'ambos') {
+                const opt = document.createElement('option');
+                opt.value = v.nome;
+                opt.dataset.reforco = v.dias_reforco || 365;
+                opt.textContent = v.nome;
+                selVacina.appendChild(opt);
+            }
+        }
     });
 
-    const calcularRetorno = () => {
+    const calcularRetorno = function() {
         const selected = selVacina.options[selVacina.selectedIndex];
         const dataDose = inputDataDose.value;
         const dataNasc = document.getElementById('petNascimento').value;
@@ -206,15 +217,14 @@ function configurarEventosPet() {
             let dias = parseInt(selected.dataset.reforco) || 365;
             if (dataNasc) {
                 const dNasc = new Date(dataNasc + 'T12:00:00');
-                const dDose = new Date(dataDose + 'T12:00:00');
-                const meses = (dDose - dNasc) / (1000 * 60 * 60 * 24 * 30);
-                const vacinasPrincipais = ['V10', 'V8', 'V5', 'Giardia'];
-                if (meses < 4 && vacinasPrincipais.includes(selected.value)) {
+                const dDoseObj = new Date(dataDose + 'T12:00:00');
+                const meses = (dDoseObj - dNasc) / (1000 * 60 * 60 * 24 * 30);
+                if (meses < 4 && (selected.value === 'V10' || selected.value === 'V8' || selected.value === 'V5')) {
                     dias = 21;
                 }
             }
-            let [ano, mes, dia] = dataDose.split('-');
-            let d = new Date(ano, mes - 1, dia);
+            let partes = dataDose.split('-');
+            let d = new Date(partes[0], partes[1] - 1, partes[2]);
             d.setDate(d.getDate() + dias);
             document.getElementById('dataRevacinaPrevista').value = d.toISOString().split('T')[0];
         }
@@ -223,7 +233,7 @@ function configurarEventosPet() {
     selVacina.addEventListener('change', calcularRetorno);
     inputDataDose.addEventListener('change', calcularRetorno);
 
-    document.getElementById('btnAddVacinaLista').onclick = () => {
+    document.getElementById('btnAddVacinaLista').onclick = function() {
         const nome = selVacina.value;
         const dose = inputDataDose.value;
         const revac = document.getElementById('dataRevacinaPrevista').value;
@@ -232,9 +242,10 @@ function configurarEventosPet() {
         
         listaVacinasTemp.push({ nome: nome, data_aplicacao: dose, data_revacina: revac });
         
+        // MUDANÇA VITAL: Concatenação segura
         const item = document.createElement('div');
-        item.style = "border-left: 3px solid var(--primary); padding: 8px; margin-bottom: 5px; background: #eee; border-radius: 5px; font-size: 0.8rem;";
-        item.innerHTML = `<b>${nome}</b><br><small>Retorno: ${revac.split('-').reverse().join('/')}</small>`;
+        item.style.cssText = "border-left: 3px solid #4ECDC4; padding: 8px; margin-bottom: 5px; background: #eee; border-radius: 5px; font-size: 0.8rem;";
+        item.innerHTML = "<b>" + nome + "</b><br><small>Retorno: " + revac.split('-').reverse().join('/') + "</small>";
         document.getElementById('miniListaVacinas').appendChild(item);
         
         selVacina.value = "";
@@ -242,7 +253,7 @@ function configurarEventosPet() {
         document.getElementById('dataRevacinaPrevista').value = "";
     };
 
-    formPet.onsubmit = async (e) => {
+    formPet.onsubmit = async function(e) {
         e.preventDefault();
         if(!tutorIdAtual) return alert("Erro: Salve o tutor primeiro!");
         
@@ -252,8 +263,11 @@ function configurarEventosPet() {
         
         let proximaRevacinaGlobal = '2099-12-31';
         if(listaVacinasTemp.length > 0) {
-            let datas = listaVacinasTemp.map(v => new Date(v.data_revacina + 'T12:00:00').getTime());
-            proximaRevacinaGlobal = new Date(Math.min(...datas)).toISOString().split('T')[0];
+            let datas = [];
+            for(let i=0; i < listaVacinasTemp.length; i++) {
+                datas.push(new Date(listaVacinasTemp[i].data_revacina + 'T12:00:00').getTime());
+            }
+            proximaRevacinaGlobal = new Date(Math.min.apply(null, datas)).toISOString().split('T')[0];
         }
 
         const petData = {
@@ -273,15 +287,15 @@ function configurarEventosPet() {
 
         try {
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando Pet...';
+            btn.innerHTML = 'Salvando Pet...';
             
             await db.collection('clientes').doc(tutorIdAtual).collection('pets').add(petData);
             
-            alert("🐾 Pet salvo com sucesso!");
+            alert("Pet salvo com sucesso!");
             
             const cardMini = document.createElement('div');
-            cardMini.style = "padding:10px; margin-bottom:8px; border-left: 4px solid var(--primary); background: white; border-radius: 10px; font-weight: bold;";
-            cardMini.textContent = `${petData.nome} (${petData.raca})`;
+            cardMini.style.cssText = "padding:10px; margin-bottom:8px; border-left: 4px solid #4ECDC4; background: white; border-radius: 10px; font-weight: bold;";
+            cardMini.textContent = petData.nome + " (" + petData.raca + ")";
             document.getElementById('listaPetsCadastrados').appendChild(cardMini);
             
             limparFormularioPet();
@@ -310,7 +324,7 @@ function avancarParaPets() {
     document.getElementById('cardTutor').style.opacity = '0.6';
     document.getElementById('cardTutor').style.pointerEvents = 'none';
     document.getElementById('secaoPets').style.display = 'block';
-    setTimeout(() => {
+    setTimeout(function() {
         document.getElementById('secaoPets').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
 }
