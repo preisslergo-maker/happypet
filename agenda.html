@@ -61,12 +61,21 @@
         .filtro-container {
             margin: 20px 20px;
             background: var(--card-white);
-            padding: 12px 18px;
+            padding: 5px 15px;
             border-radius: 18px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            justify-content: space-between;
             box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+        }
+
+        .btn-seta {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 1.2rem;
+            padding: 10px;
+            cursor: pointer;
         }
         
         .input-data { 
@@ -75,8 +84,9 @@
             font-size: 1rem; 
             color: var(--text-main); 
             font-weight: 700; 
-            width: 100%;
+            width: 130px;
             background: transparent;
+            text-align: center;
         }
 
         .container-agenda { padding: 0 20px; }
@@ -130,7 +140,7 @@
         }
         .servico-info i { color: var(--primary); margin-top: 2px; }
 
-        .actions-group { display: flex; gap: 12px; margin-top: 18px; }
+        .actions-group { display: flex; gap: 10px; margin-top: 18px; }
         
         .btn-atender { 
             flex: 3;
@@ -149,6 +159,19 @@
             gap: 8px;
         }
 
+        .btn-reagendar-card { 
+            flex: 1;
+            background: #f1f2f6; 
+            color: #57606f; 
+            border: none; 
+            border-radius: 15px; 
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         .btn-cancelar { 
             flex: 1;
             background: #FFF0F0; 
@@ -156,7 +179,7 @@
             border: none; 
             border-radius: 15px; 
             cursor: pointer;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -190,6 +213,30 @@
             width: 100%;
             justify-content: center;
         }
+
+        /* --- ESTILOS DO MODAL DE REAGENDAMENTO --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center;
+            z-index: 2000; backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background: white; width: 85%; max-width: 350px; padding: 25px;
+            border-radius: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            text-align: center; animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .modal-content h3 { margin-top: 0; color: var(--text-main); font-weight: 900; }
+        .modal-label { display: block; text-align: left; margin: 15px 0 5px; font-weight: 800; font-size: 0.8rem; color: var(--primary); text-transform: uppercase; }
+        .modal-input { width: 100%; padding: 15px; border-radius: 12px; border: 2px solid #F0F0F0; font-size: 1rem; outline: none; box-sizing: border-box; }
+        .modal-input:focus { border-color: var(--primary); }
+
+        .modal-actions { display: flex; gap: 10px; margin-top: 25px; }
+        .btn-modal-save { flex: 2; background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 800; cursor: pointer; }
+        .btn-modal-cancel { flex: 1; background: #EEE; color: #666; border: none; padding: 15px; border-radius: 12px; font-weight: 800; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -200,8 +247,9 @@
     </header>
 
     <div class="filtro-container">
-        <i class="fas fa-calendar-day" style="color: var(--primary); font-size: 1.2rem;"></i>
+        <button class="btn-seta" onclick="mudarData(-1)"><i class="fas fa-chevron-left"></i></button>
         <input type="date" id="filtroData" class="input-data" onchange="carregarAgenda()">
+        <button class="btn-seta" onclick="mudarData(1)"><i class="fas fa-chevron-right"></i></button>
     </div>
 
     <main class="container-agenda" id="listaAgenda">
@@ -214,13 +262,31 @@
         </a>
     </div>
 
+    <div id="modalReagendar" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Reagendar</h3>
+            <input type="hidden" id="editId">
+            <input type="hidden" id="editOrigem">
+
+            <label class="modal-label">Nova Data</label>
+            <input type="date" id="editData" class="modal-input">
+
+            <label class="modal-label">Nova Hora</label>
+            <input type="time" id="editHora" class="modal-input">
+
+            <div class="modal-actions">
+                <button class="btn-modal-cancel" onclick="fecharModal()">VOLTAR</button>
+                <button class="btn-modal-save" id="btnSalvarMudanca" onclick="salvarReagendamento()">SALVAR</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="js/firebase-config.js"></script>
 
     <script>
-        // Função para preencher a data ANTES de buscar no banco
         function garantirDataPreenchida() {
             const inputFiltro = document.getElementById('filtroData');
             if(inputFiltro && !inputFiltro.value) {
@@ -231,13 +297,20 @@
             }
         }
 
-        // O LEÃO DE CHÁCARA (Agora ele organiza a ordem certa das coisas)
+        function mudarData(dias) {
+            const inputFiltro = document.getElementById('filtroData');
+            let dataAtual = new Date(inputFiltro.value + 'T12:00:00');
+            dataAtual.setDate(dataAtual.getDate() + dias);
+            inputFiltro.value = dataAtual.toISOString().split('T')[0];
+            carregarAgenda();
+        }
+
         firebase.auth().onAuthStateChanged((user) => {
             if (user) {
-                garantirDataPreenchida(); // 1. Garante que a data tem um valor
-                carregarAgenda();         // 2. Faz a busca com segurança e sem travar
+                garantirDataPreenchida();
+                carregarAgenda();
             } else {
-                window.location.href = 'index.html'; // 3. Sem login? Expulso!
+                window.location.href = 'index.html';
             }
         });
 
@@ -245,13 +318,7 @@
             const dataSel = document.getElementById('filtroData').value;
             const container = document.getElementById('listaAgenda');
             
-            if (!window.db) {
-                container.innerHTML = "<p style='text-align:center; color:red;'>Erro na inicialização do banco.</p>";
-                return;
-            }
-
-            // Trava de segurança extra para evitar erro do banco
-            if (!dataSel) return;
+            if (!window.db || !dataSel) return;
 
             container.innerHTML = "<p style='text-align:center; color:var(--text-muted); margin-top:20px;'><i class='fas fa-spinner fa-spin'></i> Buscando atendimentos...</p>";
 
@@ -260,16 +327,8 @@
                 const snap2 = await db.collection("agendamentos").where("data", "==", dataSel).get();
 
                 let listaUnificada = [];
-
-                snap1.forEach(doc => { 
-                    let d = doc.data(); d.id = doc.id; d.origem = "agenda";
-                    listaUnificada.push(d); 
-                });
-                
-                snap2.forEach(doc => { 
-                    let d = doc.data(); d.id = doc.id; d.origem = "agendamentos";
-                    listaUnificada.push(d); 
-                });
+                snap1.forEach(doc => { let d = doc.data(); d.id = doc.id; d.origem = "agenda"; listaUnificada.push(d); });
+                snap2.forEach(doc => { let d = doc.data(); d.id = doc.id; d.origem = "agendamentos"; listaUnificada.push(d); });
 
                 if (listaUnificada.length === 0) {
                     container.innerHTML = `
@@ -311,6 +370,9 @@
                             <button class="btn-atender" onclick="irParaConsulta('${tId}', '${pId}')">
                                 <i class="fas fa-stethoscope"></i> ATENDER
                             </button>
+                            <button class="btn-reagendar-card" onclick="abrirModal('${ag.id}', '${ag.origem}', '${ag.data}', '${ag.hora}')">
+                                <i class="fas fa-calendar-alt"></i>
+                            </button>
                             <button class="btn-cancelar" onclick="cancelarAtendimento('${ag.id}', '${ag.origem}')">
                                 <i class="fas fa-times"></i>
                             </button>
@@ -325,22 +387,61 @@
             }
         }
 
+        // --- FUNÇÕES DA JANELINHA RÁPIDA ---
+        function abrirModal(id, origem, data, hora) {
+            document.getElementById('editId').value = id;
+            document.getElementById('editOrigem').value = origem;
+            document.getElementById('editData').value = data;
+            document.getElementById('editHora').value = hora || "09:00";
+            document.getElementById('modalReagendar').style.display = 'flex';
+        }
+
+        function fecharModal() {
+            document.getElementById('modalReagendar').style.display = 'none';
+        }
+
+        async function salvarReagendamento() {
+            const id = document.getElementById('editId').value;
+            const origem = document.getElementById('editOrigem').value;
+            const novaData = document.getElementById('editData').value;
+            const novaHora = document.getElementById('editHora').value;
+            const btn = document.getElementById('btnSalvarMudanca');
+
+            if(!novaData || !novaHora) return alert("Preencha data e hora!");
+
+            btn.disabled = true;
+            btn.innerText = "SALVANDO...";
+
+            try {
+                await db.collection(origem).doc(id).update({
+                    data: novaData,
+                    hora: novaHora
+                });
+                fecharModal();
+                carregarAgenda(); // Atualiza a lista na hora
+            } catch (e) {
+                console.error(e);
+                alert("Erro ao salvar mudança.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "SALVAR";
+            }
+        }
+
         function irParaConsulta(tutorId, petId) {
             if(!petId || !tutorId || petId === "undefined" || tutorId === "undefined") {
-                alert("Este agendamento é antigo ou incompleto. Por favor, reagende-o selecionando o pet corretamente.");
+                alert("Dados incompletos no agendamento.");
                 return;
             }
             window.location.href = `consulta.html?petId=${petId}&tutorId=${tutorId}`;
         }
 
         async function cancelarAtendimento(id, colecao) {
-            if (!confirm("Confirmar cancelamento deste atendimento?")) return;
+            if (!confirm("Confirmar cancelamento?")) return;
             try {
                 await db.collection(colecao).doc(id).delete();
-                alert("Agendamento removido!");
                 carregarAgenda();
             } catch (e) {
-                console.error(e);
                 alert("Erro ao excluir.");
             }
         }
