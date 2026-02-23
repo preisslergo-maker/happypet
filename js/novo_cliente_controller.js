@@ -1,5 +1,5 @@
 /**
- * CONTROLLER - Novo Cadastro Happy Pet (Versão Estabilizada)
+ * CONTROLLER - Novo Cadastro Happy Pet (Versão Final Destravada e Moderna)
  */
 
 let tutorIdAtual = null;
@@ -12,41 +12,66 @@ const bancoRacas = {
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Carrega vacinas do Firebase
     await carregarCatalogoDoFirebase();
+    
+    // 2. Ativa os mecanismos
     configurarCEP();
     configurarEventosTutor();
     configurarEventosPet();
 });
 
-// --- BUSCA DE CEP AUTOMÁTICA (Corrigida e Sem Erro de Variável) ---
+// --- BUSCA DE CEP AUTOMÁTICA (Independente e Anti-Loop) ---
 function configurarCEP() {
-    const inputCep = document.getElementById('cliCep');
-    let buscando = false;
+    const cepInput = document.getElementById('cliCep');
+    let buscandoAgora = false;
 
-    if(inputCep) {
-        inputCep.addEventListener('blur', function(e) {
-            const valor = e.target.value.replace(/\D/g, '');
-            if(valor.length === 8 && !buscando) {
-                buscando = true;
-                const inputEnd = document.getElementById('cliEndereco');
-                inputEnd.value = "Localizando...";
+    if(cepInput) {
+        cepInput.addEventListener('blur', (e) => {
+            const cep = e.target.value.replace(/\D/g, '');
+            if(cep.length !== 8 || buscandoAgora) return;
 
-                Utils.consultarCEP(valor, (dados) => {
-                    if(dados && !dados.erro) {
-                        inputEnd.value = `${dados.logradouro}, ${dados.bairro}, ${dados.localidade} - ${dados.uf}`;
-                        setTimeout(() => document.getElementById('cliNum').focus(), 100);
-                    } else {
-                        alert("CEP não encontrado.");
-                        inputEnd.value = "";
-                    }
-                    buscando = false;
-                });
-            }
+            buscandoAgora = true;
+            const inputEnd = document.getElementById('cliEndereco');
+            const originalVal = inputEnd.value;
+            inputEnd.value = "Buscando endereço...";
+
+            // Cria a ponte direta com os Correios (ViaCEP)
+            const script = document.createElement('script');
+            const callbackName = 'viacep_callback_' + Math.floor(Math.random() * 100000);
+
+            window[callbackName] = function(dados) {
+                if(dados && !dados.erro) {
+                    inputEnd.value = `${dados.logradouro}, ${dados.bairro}, ${dados.localidade} - ${dados.uf}`;
+                    const inputNum = document.getElementById('cliNum');
+                    if(inputNum) inputNum.focus();
+                } else {
+                    inputEnd.value = originalVal;
+                    alert("CEP não encontrado.");
+                }
+                buscandoAgora = false;
+                delete window[callbackName];
+                document.body.removeChild(script);
+            };
+
+            script.src = `https://viacep.com.br/ws/${cep}/json/?callback=${callbackName}`;
+            script.onerror = function() {
+                inputEnd.value = originalVal;
+                alert("Erro de conexão ao buscar CEP.");
+                buscandoAgora = false;
+                delete window[callbackName];
+                document.body.removeChild(script);
+            };
+            document.body.appendChild(script);
+        });
+
+        cepInput.addEventListener('input', (e) => {
+            if(e.target.value === "") buscandoAgora = false;
         });
     }
 }
 
-// --- ETAPA 1: LÓGICA DO TUTOR (Com Validação Real de CPF) ---
+// --- ETAPA 1: LÓGICA DO TUTOR ---
 function configurarEventosTutor() {
     const cpfInput = document.getElementById('cliCpf');
     
@@ -54,53 +79,57 @@ function configurarEventosTutor() {
         cpfInput.addEventListener('blur', async (e) => {
             const cpfLimpo = e.target.value.replace(/\D/g, '');
             
-            // Valida o algoritmo do CPF
-            if (cpfLimpo.length > 0 && !Utils.validarCPF(cpfLimpo)) {
-                alert("CPF inválido! Verifique os números.");
+            // Validação de formato com failsafe
+            if (cpfLimpo.length > 0 && typeof Utils !== 'undefined' && Utils.validarCPF && !Utils.validarCPF(cpfLimpo)) {
+                alert("⚠️ CPF Inválido! Por favor, verifique os números.");
+                e.target.style.borderColor = "red";
                 return;
+            } else {
+                e.target.style.borderColor = "#F0F0F0";
             }
 
-            if(cpfLimpo.length === 11) {
-                try {
-                    const query = await db.collection('clientes').where('cpf', '==', cpfLimpo).get();
-                    if(!query.empty) {
-                        const dadosTutor = query.docs[0].data();
-                        if(confirm(`Tutor já cadastrado: ${dadosTutor.nome}.\nDeseja carregar os dados?`)) {
-                            tutorIdAtual = query.docs[0].id;
-                            preencherCamposTutor(dadosTutor);
-                            avancarParaPets();
-                        }
+            if(cpfLimpo.length !== 11) return;
+
+            try {
+                const query = await db.collection('clientes').where('cpf', '==', cpfLimpo).get();
+                if(!query.empty) {
+                    const dadosTutor = query.docs[0].data();
+                    if(confirm(`Tutor já cadastrado: ${dadosTutor.nome}.\n\nDeseja carregar estes dados para adicionar mais um pet?`)) {
+                        tutorIdAtual = query.docs[0].id;
+                        preencherCamposTutor(dadosTutor);
+                        avancarParaPets();
                     }
-                } catch (err) { console.error(err); }
-            }
+                }
+            } catch (err) { console.error("Erro busca CPF:", err); }
         });
     }
 
     document.getElementById('formTutor').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const btn = document.getElementById('btnSalvarTutor');
+        
         const cpfValor = document.getElementById('cliCpf').value.replace(/\D/g, '');
-
-        if (cpfValor !== "" && !Utils.validarCPF(cpfValor)) {
-            alert("Não é possível salvar com CPF inválido.");
+        if (cpfValor !== "" && typeof Utils !== 'undefined' && Utils.validarCPF && !Utils.validarCPF(cpfValor)) {
+            alert("Não é possível salvar. O CPF informado é inválido.");
             return;
         }
 
+        const btn = document.getElementById('btnSalvarTutor');
         const nomeDigitado = document.getElementById('cliNome').value.trim();
         const telefoneMasc = document.getElementById('cliTel').value;
+        const telefoneLimpo = telefoneMasc.replace(/\D/g, ''); 
         
         const dados = {
             nome: nomeDigitado,
-            nome_busca: nomeDigitado.toLowerCase(),
+            nome_busca: nomeDigitado.toLowerCase(), 
             cpf: cpfValor,
-            telefone: telefoneMasc.replace(/\D/g, ''),
+            telefone: telefoneLimpo,
             telefoneFormatado: telefoneMasc,
             cep: document.getElementById('cliCep').value.replace(/\D/g, ''),
             endereco: document.getElementById('cliEndereco').value,
             numero: document.getElementById('cliNum').value,
             bairro: document.getElementById('cliEndereco').value.split(',')[1]?.trim() || 'N/I',
-            saldo_devedor: 0,
-            criadoEm: new Date()
+            saldo_devedor: 0, 
+            criadoEm: new Date().toISOString()
         };
 
         try {
@@ -114,25 +143,32 @@ function configurarEventosTutor() {
                 tutorIdAtual = docRef.id;
             }
             
-            alert("Tutor salvo!");
+            alert("✅ Tutor salvo com sucesso!");
             btn.innerHTML = '<i class="fas fa-check"></i> SALVO';
             avancarParaPets();
         } catch (err) { 
-            alert("Erro: " + err.message); 
-            btn.disabled = false;
+            console.error(err);
+            alert("Erro ao salvar: " + err.message); 
+            btn.disabled = false; 
+            btn.innerHTML = '<i class="fas fa-save"></i> TENTAR NOVAMENTE';
         }
     });
 }
 
-// --- ETAPA 2: LÓGICA DO PET ---
+// --- ETAPA 2: LÓGICA DO PET & VACINAS ---
 async function carregarCatalogoDoFirebase() {
     try {
         const snapshot = await db.collection('catalogo_vacinas').get();
-        catalogoVacinasCache = snapshot.docs.map(doc => doc.data());
+        if (!snapshot.empty) {
+            catalogoVacinasCache = snapshot.docs.map(doc => doc.data());
+        } else {
+            throw new Error("Coleção vazia");
+        }
     } catch (e) { 
         catalogoVacinasCache = [
             { nome: 'V10', especie: 'canino', dias_reforco: 365 },
-            { nome: 'Antirrábica', especie: 'ambos', dias_reforco: 365 }
+            { nome: 'Antirrábica', especie: 'ambos', dias_reforco: 365 },
+            { nome: 'V5 (Quíntupla Felina)', especie: 'felino', dias_reforco: 365 }
         ];
     }
 }
@@ -154,7 +190,10 @@ function configurarEventosPet() {
     selEspecie.onchange = (e) => {
         const esp = e.target.value;
         const dlRacas = document.getElementById('listaRacasSugestao');
-        dlRacas.innerHTML = (bancoRacas[esp] || []).map(r => `<option value="${r}">`).join('');
+        
+        // Mapeamento correto com a tag fechada
+        dlRacas.innerHTML = (bancoRacas[esp] || []).map(r => `<option value="${r}"></option>`).join('');
+
         selVacina.innerHTML = '<option value="">Selecione a vacina...</option>';
         catalogoVacinasCache.filter(v => v.especie === esp || v.especie === 'ambos').forEach(v => {
             const opt = document.createElement('option');
@@ -169,12 +208,21 @@ function configurarEventosPet() {
         const selected = selVacina.options[selVacina.selectedIndex];
         const dataDose = inputDataDose.value;
         const dataNasc = document.getElementById('petNascimento').value;
+
         if (selected && dataDose && selected.value !== "") {
             let dias = parseInt(selected.dataset.reforco) || 365;
+
             if (dataNasc) {
-                const meses = (new Date(dataDose + 'T12:00:00') - new Date(dataNasc + 'T12:00:00')) / (1000 * 60 * 60 * 24 * 30);
-                if (meses < 4 && ['V10', 'V8', 'V5'].includes(selected.value)) dias = 21;
+                const dNasc = new Date(dataNasc + 'T12:00:00');
+                const dDose = new Date(dataDose + 'T12:00:00');
+                const meses = (dDose - dNasc) / (1000 * 60 * 60 * 24 * 30);
+                
+                const vacinasPrincipais = ['V10', 'V8', 'V5', 'Giardia'];
+                if (meses < 4 && vacinasPrincipais.includes(selected.value)) {
+                    dias = 21;
+                }
             }
+
             let [ano, mes, dia] = dataDose.split('-');
             let d = new Date(ano, mes - 1, dia); 
             d.setDate(d.getDate() + dias);
@@ -189,16 +237,33 @@ function configurarEventosPet() {
         const nome = selVacina.value;
         const dose = inputDataDose.value;
         const revac = document.getElementById('dataRevacinaPrevista').value;
-        if(!nome || !dose || !revac) return alert("Preencha os dados da vacina!");
-        listaVacinasTemp.push({ nome, data_aplicacao: dose, data_revacina: revac });
-        document.getElementById('miniListaVacinas').innerHTML += `<div style="padding:5px; background:#eee; margin-top:5px; border-radius:5px;"><b>${nome}</b> - ${revac.split('-').reverse().join('/')}</div>`;
-        selVacina.value = ""; inputDataDose.value = ""; document.getElementById('dataRevacinaPrevista').value = "";
+        
+        if(!nome || !dose || !revac) return alert("Preencha a vacina, data da dose e previsão!");
+
+        listaVacinasTemp.push({ nome: nome, data_aplicacao: dose, data_revacina: revac });
+        
+        const item = document.createElement('div');
+        item.style = "border-left: 3px solid var(--primary); padding: 8px; margin-bottom: 5px; background: #eee; border-radius: 5px; font-size: 0.8rem;";
+        item.innerHTML = `<b>${nome}</b><br><small>Retorno: ${revac.split('-').reverse().join('/')}</small>`;
+        document.getElementById('miniListaVacinas').appendChild(item);
+            
+        selVacina.value = "";
+        inputDataDose.value = "";
+        document.getElementById('dataRevacinaPrevista').value = "";
     };
 
     formPet.onsubmit = async (e) => {
         e.preventDefault();
+        if(!tutorIdAtual) return alert("Erro: Salve o tutor primeiro!");
+
         const btn = e.target.querySelector('button[type="submit"]');
-        let proximaRevacina = (listaVacinasTemp.length > 0) ? new Date(Math.min(...listaVacinasTemp.map(v => new Date(v.data_revacina + 'T12:00:00')))).toISOString().split('T')[0] : '2099-12-31';
+        const tutorTel = document.getElementById('cliTel').value.replace(/\D/g, ''); 
+
+        let proximaRevacinaGlobal = '2099-12-31';
+        if(listaVacinasTemp.length > 0) {
+            let datas = listaVacinasTemp.map(v => new Date(v.data_revacina + 'T12:00:00').getTime());
+            proximaRevacinaGlobal = new Date(Math.min(...datas)).toISOString().split('T')[0];
+        }
 
         const petData = {
             nome: document.getElementById('petNome').value.trim(),
@@ -206,19 +271,26 @@ function configurarEventosPet() {
             raca: document.getElementById('petRaca').value || 'SRD',
             sexo: document.getElementById('petSexo').value,
             castrado: document.getElementById('petCastrado').value === 'sim',
+            microchip: document.getElementById('petChip').value || '',
             nascimento: document.getElementById('petNascimento').value,
             comportamento: document.querySelector('input[name="comportamento"]:checked')?.value || 'manso',
-            vacinas: listaVacinasTemp,
-            data_revacina: proximaRevacina,
-            tutorTel: document.getElementById('cliTel').value.replace(/\D/g, ''),
-            criadoEm: new Date()
+            vacinas: listaVacinasTemp, 
+            data_revacina: proximaRevacinaGlobal, 
+            tutorTel: tutorTel, 
+            criadoEm: new Date().toISOString()
         };
 
         try {
             btn.disabled = true;
+            btn.innerHTML = 'Salvando...';
             await db.collection('clientes').doc(tutorIdAtual).collection('pets').add(petData);
-            alert("Pet salvo!");
-            document.getElementById('listaPetsCadastrados').innerHTML += `<div style="font-weight:bold; padding:5px;">${petData.nome}</div>`;
+            alert("🐾 Pet salvo!");
+            
+            const cardMini = document.createElement('div');
+            cardMini.style = "padding:10px; margin-bottom:8px; border-left: 4px solid var(--primary); background: white; border-radius: 10px; font-weight: bold;";
+            cardMini.textContent = `${petData.nome} (${petData.raca})`;
+            document.getElementById('listaPetsCadastrados').appendChild(cardMini);
+            
             limparFormularioPet();
         } catch (err) { alert(err.message); btn.disabled = false; }
     };
@@ -226,6 +298,7 @@ function configurarEventosPet() {
     document.getElementById('btnCancelarPet').onclick = limparFormularioPet;
 }
 
+// AUXILIARES
 function preencherCamposTutor(d) {
     document.getElementById('cliNome').value = d.nome || '';
     document.getElementById('cliCpf').value = d.cpf || '';
@@ -239,6 +312,7 @@ function avancarParaPets() {
     document.getElementById('cardTutor').style.opacity = '0.6';
     document.getElementById('cardTutor').style.pointerEvents = 'none';
     document.getElementById('secaoPets').style.display = 'block';
+    setTimeout(() => { document.getElementById('secaoPets').scrollIntoView({ behavior: 'smooth' }); }, 100);
 }
 
 function limparFormularioPet() {
