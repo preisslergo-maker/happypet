@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#4ECDC4">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Estoque Inteligente - Happy Pet</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --primary: #4ECDC4;
+            --secondary: #FF6B6B;
+            --bg-app: #F7F9FC;
+            --card-white: #FFFFFF;
+            --text-main: #2D3436;
+            --text-muted: #636e72;
+            --warning: #f39c12;
+            --success: #2ecc71;
+            --magic: #f1c40f;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Roboto, sans-serif; 
+            background-color: var(--bg-app); 
+            margin: 0; 
+            color: var(--text-main);
+            padding-bottom: 90px;
+        }
+
+        .top-bar-app {
+            background: linear-gradient(135deg, var(--primary), #45b7af);
+            padding: 30px 25px 20px 25px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-radius: 0 0 25px 25px;
+            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .btn-back-nav { 
+            background: rgba(255,255,255,0.2); 
+            border: none; color: white; 
+            width: 35px; height: 35px; 
+            border-radius: 10px; 
+            display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; 
+        }
+
+        .container { padding: 20px; }
+
+        /* Abas de Categoria */
+        .filtros-scroll {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 15px;
+            margin-bottom: 10px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .filtros-scroll::-webkit-scrollbar { display: none; }
+        
+        .btn-filtro {
+            background: white; border: 2px solid #EEE; padding: 10px 18px; border-radius: 20px;
+            font-weight: 700; font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; cursor: pointer;
+        }
+        .btn-filtro.active {
+            background: var(--primary); color: white; border-color: var(--primary);
+            box-shadow: 0 4px 10px rgba(78, 205, 196, 0.3);
+        }
+
+        /* Card do Produto */
+        .produto-card {
+            background: var(--card-white); border-radius: 20px; padding: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 15px;
+            border-left: 5px solid var(--success); position: relative;
+        }
+        .produto-card.alerta-qnt { border-left-color: var(--secondary); background: #FFF5F5; }
+        .produto-card.alerta-val { border-left-color: var(--warning); background: #FFFAF0; }
+
+        .prod-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+        .prod-info strong { display: block; font-size: 1.1rem; color: var(--text-main); margin-bottom: 4px; }
+        .prod-info small { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; background: #EEE; padding: 4px 8px; border-radius: 8px; margin-right: 5px; }
+        
+        .txt-alerta { font-size: 0.75rem; font-weight: 800; display: inline-block; margin-top: 8px; padding: 4px 8px; border-radius: 6px; }
+        .txt-alerta.qnt { background: #FFE0E0; color: var(--secondary); }
+        .txt-alerta.val { background: #FFEAA7; color: #d35400; }
+
+        /* A Lâmpada Mágica */
+        .btn-magic {
+            background: var(--magic); color: white; border: none; width: 40px; height: 40px; border-radius: 12px;
+            font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 10px rgba(241, 196, 15, 0.3); animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
+
+        /* Controles + e - */
+        .controles-rodape { display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #EEE; padding-top: 12px; margin-top: 5px; }
+        .contador-box { display: flex; align-items: center; gap: 15px; background: #F8F9FA; padding: 6px; border-radius: 15px; }
+        .btn-cont { background: white; border: none; width: 35px; height: 35px; border-radius: 10px; font-weight: 900; font-size: 1.2rem; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; }
+        .btn-cont.menos { color: var(--secondary); }
+        .btn-cont.mais { color: var(--success); }
+        .qtd-num { font-weight: 900; font-size: 1.2rem; width: 25px; text-align: center; color: var(--text-main); }
+
+        /* Botões Flutuantes e Modais */
+        .btn-flutuante { position: fixed; bottom: 30px; right: 25px; background: var(--primary); color: white; width: 60px; height: 60px; border-radius: 30px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 8px 20px rgba(78, 205, 196, 0.4); border: none; cursor: pointer; z-index: 100; }
+        
+        .modal-sheet { display:none; position:fixed; bottom:0; left:0; width:100%; height:90%; background:white; border-radius:30px 30px 0 0; box-shadow:0 -10px 30px rgba(0,0,0,0.2); z-index:2000; padding:25px; box-sizing:border-box; overflow-y:auto; animation: slideSheet 0.3s ease-out; }
+        @keyframes slideSheet { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        .modal-input { width:100%; border:1px solid #EEE; border-radius:12px; padding:15px; font-family:inherit; margin-bottom:15px; background:#F9F9F9; outline:none; font-size:1rem; box-sizing: border-box; }
+        .label-modal { font-size: 0.75rem; font-weight: 800; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 5px; }
+        .btn-p-solid { width: 100%; background: var(--primary); color: white; border: none; padding: 18px; border-radius: 18px; font-weight: 800; font-size: 1rem; cursor: pointer; margin-top: 10px;}
+
+        .list-card-pet { background: #F8F9FA; border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--magic); }
+    </style>
+</head>
+<body>
+
+    <header class="top-bar-app">
+        <button class="btn-back-nav" onclick="window.location.href='home.html'"><i class="fas fa-chevron-left"></i></button>
+        <h1 style="margin:0; font-size: 1.1rem; font-weight: 800;">Estoque Inteligente</h1>
+    </header>
+
+    <main class="container">
+        
+        <div class="filtros-scroll" id="containerFiltros">
+            <button class="btn-filtro active" onclick="filtrarCategoria('Todas', this)">Visão Geral</button>
+            <button class="btn-filtro" onclick="filtrarCategoria('Vacinas', this)">💉 Vacinas</button>
+            <button class="btn-filtro" onclick="filtrarCategoria('Medicamentos', this)">💊 Medicamentos</button>
+            <button class="btn-filtro" onclick="filtrarCategoria('Testes', this)">🧪 Testes</button>
+            <button class="btn-filtro" onclick="filtrarCategoria('Descartáveis', this)">🧤 Descartáveis</button>
+        </div>
+
+        <div id="listaEstoque">
+            <p style="text-align: center; color: var(--text-muted); margin-top: 40px;"><i class="fas fa-spinner fa-spin"></i> Abrindo a maleta...</p>
+        </div>
+
+    </main>
+
+    <button class="btn-flutuante" onclick="abrirModalProduto()">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <div id="modalProduto" class="modal-sheet">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h3 style="font-weight:900; margin:0;"><i class="fas fa-box-open" style="color:var(--primary);"></i> Adicionar ao Estoque</h3>
+            <button onclick="fecharModalProduto()" style="background:none; border:none; color:var(--text-muted); font-weight:800; cursor:pointer;">FECHAR</button>
+        </div>
+
+        <label class="label-modal">Categoria do Item</label>
+        <select id="pCategoria" class="modal-input" onchange="adaptarFormulario()">
+            <option value="Descartáveis">Descartáveis (Luvas, Seringas...)</option>
+            <option value="Vacinas">Vacinas</option>
+            <option value="Medicamentos">Medicamentos</option>
+            <option value="Testes">Testes Rápidos</option>
+        </select>
+
+        <label class="label-modal">Nome de Exibição (Fabricante/Marca)</label>
+        <input type="text" id="pNome" class="modal-input" placeholder="Ex: Zoetis Vanguard, Seringa 3ml...">
+
+        <div id="boxVacinaPadrao" style="display:none; background:#F0FBF9; padding:15px; border-radius:15px; margin-bottom:15px; border: 1px solid var(--primary);">
+            <label class="label-modal" style="color:var(--dark);">Padrão da Vacina (Para busca no sistema)</label>
+            <select id="pVacinaPadrao" class="modal-input" style="margin-bottom:0;">
+                <option value="V10">V10 (Múltipla Canina)</option>
+                <option value="V8">V8</option>
+                <option value="V5">V5 (Quíntupla Felina)</option>
+                <option value="Antirrábica">Antirrábica</option>
+                <option value="Giardia">Giárdia</option>
+                <option value="Gripe">Gripe (Pneumodog/Bronchi)</option>
+            </select>
+        </div>
+
+        <div id="boxValidade" style="display:none; gap:10px;">
+            <div style="flex:1;">
+                <label class="label-modal">Lote</label>
+                <input type="text" id="pLote" class="modal-input" placeholder="Nº Lote">
+            </div>
+            <div style="flex:1;">
+                <label class="label-modal">Vencimento</label>
+                <input type="date" id="pValidade" class="modal-input">
+            </div>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+            <div style="flex:1;">
+                <label class="label-modal">Qtd na Bolsa</label>
+                <input type="number" id="pQtd" class="modal-input" placeholder="0">
+            </div>
+            <div style="flex:1;">
+                <label class="label-modal">Estoque Mínimo</label>
+                <input type="number" id="pMin" class="modal-input" placeholder="Ex: 3">
+            </div>
+        </div>
+
+        <button onclick="salvarProduto()" id="btnSalvarProduto" class="btn-p-solid">
+            SALVAR ITEM
+        </button>
+    </div>
+
+    <div id="modalLampada" class="modal-sheet" style="background: #FFFDF5;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3 style="font-weight:900; margin:0; color:var(--magic);"><i class="fas fa-lightbulb"></i> Gerador de Consultas</h3>
+            <button onclick="document.getElementById('modalLampada').style.display='none'" style="background:none; border:none; font-weight:800; cursor:pointer;">X</button>
+        </div>
+        <p style="font-size:0.9rem; color:var(--text-muted); margin-top:0;">Estes pets estão com a vacina <strong id="txtVacinaAlvo" style="color:var(--text-main);">...</strong> vencendo ou atrasada.</p>
+        
+        <div id="listaPetsMagica">
+            <p style="text-align: center;"><i class="fas fa-spinner fa-spin"></i> Procurando nas fichas...</p>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="js/firebase-config.js"></script>
+
+    <script>
+        /* global db */
+        let estoqueGlobal = [];
+        let filtroAtual = "Todas";
+
+        window.onload = function() { carregarEstoque(); };
+
+        // --- DINÂMICA DO FORMULÁRIO ---
+        function adaptarFormulario() {
+            var cat = document.getElementById("pCategoria").value;
+            var boxVacina = document.getElementById("boxVacinaPadrao");
+            var boxValidade = document.getElementById("boxValidade");
+
+            if (cat === "Vacinas") {
+                boxVacina.style.display = "block";
+                boxValidade.style.display = "flex";
+            } else if (cat === "Medicamentos" || cat === "Testes") {
+                boxVacina.style.display = "none";
+                boxValidade.style.display = "flex";
+            } else {
+                boxVacina.style.display = "none";
+                boxValidade.style.display = "none";
+            }
+        }
+
+        // --- CARREGAR E RENDERIZAR ESTOQUE ---
+        async function carregarEstoque() {
+            try {
+                const snap = await db.collection("estoque").orderBy("nome").get();
+                estoqueGlobal = [];
+                snap.forEach(function(doc) {
+                    let d = doc.data();
+                    d.id = doc.id;
+                    estoqueGlobal.push(d);
+                });
+                renderizarLista();
+            } catch (err) {
+                console.error(err);
+                document.getElementById("listaEstoque").innerHTML = "<p style='color:red;'>Erro ao carregar maleta.</p>";
+            }
+        }
+
+        function renderizarLista() {
+            var container = document.getElementById("listaEstoque");
+            container.innerHTML = "";
+
+            var itens = filtroAtual === "Todas" ? estoqueGlobal : estoqueGlobal.filter(function(i) { return i.categoria === filtroAtual; });
+
+            if (itens.length === 0) {
+                container.innerHTML = "<p style='text-align:center; color:#999;'>Nenhum item encontrado.</p>";
+                return;
+            }
+
+            var hoje = new Date();
+            var limiteVencimento = new Date();
+            limiteVencimento.setDate(hoje.getDate() + 45); // Alerta laranja se vencer em até 45 dias
+
+            // Ordenação: 1º Vencendo, 2º Estoque Baixo, 3º Normais
+            itens.sort(function(a, b) {
+                var scoreA = 0; var scoreB = 0;
+                if(a.validade && new Date(a.validade) <= limiteVencimento) scoreA += 10;
+                if(a.quantidade <= a.minimo) scoreA += 5;
+                if(b.validade && new Date(b.validade) <= limiteVencimento) scoreB += 10;
+                if(b.quantidade <= b.minimo) scoreB += 5;
+                return scoreB - scoreA;
+            });
+
+            for (var i = 0; i < itens.length; i++) {
+                var item = itens[i];
+                var baixo = item.quantidade <= item.minimo;
+                var vencendo = item.validade && new Date(item.validade) <= limiteVencimento;
+                
+                var classeCard = "";
+                if (vencendo) classeCard = " alerta-val";
+                else if (baixo) classeCard = " alerta-qnt";
+
+                var avisos = "";
+                if (baixo) avisos += "<span class='txt-alerta qnt'><i class='fas fa-arrow-down'></i> Baixo</span> ";
+                if (vencendo) {
+                    var diasVenc = Math.ceil((new Date(item.validade) - hoje) / (1000 * 60 * 60 * 24));
+                    var txtVenc = diasVenc < 0 ? "Vencido!" : "Vence em " + diasVenc + " dias";
+                    avisos += "<span class='txt-alerta val'><i class='fas fa-calendar-times'></i> " + txtVenc + "</span> ";
+                }
+
+                // A Mágica: Se for Vacina e estiver vencendo ou baixa, mostra a lâmpada
+                var btnLampada = "";
+                if (item.categoria === "Vacinas") {
+                    btnLampada = "<button class='btn-magic' onclick='chamarLampadaMagica(\"" + item.vacina_padrao + "\")'><i class='fas fa-lightbulb'></i></button>";
+                }
+
+                var div = document.createElement("div");
+                div.className = "produto-card" + classeCard;
+                
+                var html = "";
+                html += "<div class='prod-header'>";
+                html += "  <div class='prod-info'>";
+                html += "    <strong>" + item.nome + "</strong>";
+                html += "    <small>" + item.categoria + "</small>";
+                if(item.vacina_padrao) html += "<small style='background:var(--primary); color:white;'>" + item.vacina_padrao + "</small>";
+                if(item.lote) html += "<small style='background:transparent; border:1px solid #CCC;'>Lote: " + item.lote + "</small>";
+                html += "<br>" + avisos;
+                html += "  </div>";
+                html += btnLampada;
+                html += "</div>";
+
+                html += "<div class='controles-rodape'>";
+                html += "  <span style='font-size:0.85rem; color:#999; font-weight:600;'>QTD ATUAL:</span>";
+                html += "  <div class='contador-box'>";
+                html += "    <button class='btn-cont menos' onclick='atualizarQtd(\"" + item.id + "\", -1, " + item.quantidade + ")'>-</button>";
+                html += "    <span class='qtd-num' id='q_" + item.id + "'>" + item.quantidade + "</span>";
+                html += "    <button class='btn-cont mais' onclick='atualizarQtd(\"" + item.id + "\", 1, " + item.quantidade + ")'>+</button>";
+                html += "  </div>";
+                html += "</div>";
+
+                div.innerHTML = html;
+                container.appendChild(div);
+            }
+        }
+
+        function filtrarCategoria(cat, btn) {
+            filtroAtual = cat;
+            var botoes = document.querySelectorAll(".btn-filtro");
+            for(var i=0; i<botoes.length; i++) botoes[i].classList.remove("active");
+            btn.classList.add("active");
+            renderizarLista();
+        }
+
+        async function atualizarQtd(id, muda, atual) {
+            var nova = atual + muda;
+            if(nova < 0) return;
+            document.getElementById("q_" + id).innerText = nova;
+
+            try {
+                await db.collection("estoque").doc(id).update({ quantidade: nova });
+                for(var i=0; i<estoqueGlobal.length; i++) {
+                    if(estoqueGlobal[i].id === id) estoqueGlobal[i].quantidade = nova;
+                }
+                renderizarLista(); // Re-avalia cores e posições
+            } catch(e) { console.error(e); }
+        }
+
+        // --- A LÂMPADA MÁGICA ---
+        async function chamarLampadaMagica(padraoAlvo) {
+            document.getElementById("txtVacinaAlvo").innerText = padraoAlvo;
+            document.getElementById("modalLampada").style.display = "block";
+            var container = document.getElementById("listaPetsMagica");
+            container.innerHTML = "<p style='text-align:center;'><i class='fas fa-spinner fa-spin'></i> Puxando fichas clínicas...</p>";
+
+            try {
+                // Pegar os pets. Sem index complexo, puxamos os clientes e iteramos os pets.
+                var snapClientes = await db.collection("clientes").get();
+                var resultados = [];
+                var hojeData = new Date();
+                var limiteRenovacao = new Date();
+                limiteRenovacao.setDate(hojeData.getDate() + 30); // Considera atrasados ou vencendo em 30 dias
+
+                for (var i = 0; i < snapClientes.docs.length; i++) {
+                    var docCliente = snapClientes.docs[i];
+                    var dadosTutor = docCliente.data();
+                    var snapPets = await db.collection("clientes").doc(docCliente.id).collection("pets").get();
+                    
+                    snapPets.forEach(function(docP) {
+                        var p = docP.data();
+                        var temAtraso = false;
+                        var dataVenc = "";
+
+                        // Verifica a matriz de vacinas do pet
+                        if (p.vacinas && p.vacinas.length > 0) {
+                            for (var v = 0; v < p.vacinas.length; v++) {
+                                var vac = p.vacinas[v];
+                                // Se a vacina for o padrao buscado e a data de revacina estiver estourando
+                                if (vac.nome.includes(padraoAlvo) || padraoAlvo.includes(vac.nome)) {
+                                    if (vac.data_revacina && new Date(vac.data_revacina) <= limiteRenovacao) {
+                                        temAtraso = true;
+                                        dataVenc = vac.data_revacina.split('-').reverse().join('/');
+                                        break;
+                                    }
+                                }
+                            }
+                        } else {
+                            // Se o pet nunca tomou, e a data global de revacina ta vencida, é uma chance de oferecer!
+                            if (p.data_revacina && new Date(p.data_revacina) <= limiteRenovacao) {
+                                temAtraso = true;
+                                dataVenc = p.data_revacina.split('-').reverse().join('/');
+                            }
+                        }
+
+                        if (temAtraso) {
+                            resultados.push({
+                                nomePet: p.nome,
+                                raca: p.raca,
+                                nomeTutor: dadosTutor.nome,
+                                telTutor: dadosTutor.telefone,
+                                dataVencimento: dataVenc
+                            });
+                        }
+                    });
+                }
+
+                container.innerHTML = "";
+                if (resultados.length === 0) {
+                    container.innerHTML = "<p style='text-align:center; color:#999;'>Nenhum pet pendente para esta vacina. Todos protegidos!</p>";
+                    return;
+                }
+
+                for (var j = 0; j < resultados.length; j++) {
+                    var res = resultados[j];
+                    var txtZap = "Olá " + res.nomeTutor + ", tudo bem? Aqui é a Dra. Natália. Vi na ficha do " + res.nomePet + " que a proteção dele contra " + padraoAlvo + " precisa ser reforçada. Vamos agendar a visita?";
+                    var linkZap = "https://wa.me/55" + res.telTutor + "?text=" + encodeURIComponent(txtZap);
+
+                    var card = document.createElement("div");
+                    card.className = "list-card-pet";
+                    card.innerHTML = "<div><strong style='display:block; color:var(--text-main); font-size:1.1rem;'>" + res.nomePet + "</strong><small style='color:var(--text-muted);'>Tutor: " + res.nomeTutor + "</small><br><span style='font-size:0.75rem; font-weight:bold; color:var(--secondary);'>Vencimento base: " + res.dataVencimento + "</span></div><a href='" + linkZap + "' target='_blank' style='background:#25D366; color:white; width:45px; height:45px; border-radius:12px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:1.3rem;'><i class='fab fa-whatsapp'></i></a>";
+                    container.appendChild(card);
+                }
+
+            } catch(e) { console.error(e); container.innerHTML = "Erro ao buscar."; }
+        }
+
+        // --- GESTÃO DO MODAL DE CADASTRO ---
+        function abrirModalProduto() { document.getElementById("pNome").value=""; adaptarFormulario(); document.getElementById("modalProduto").style.display = "block"; }
+        function fecharModalProduto() { document.getElementById("modalProduto").style.display = "none"; }
+
+        async function salvarProduto() {
+            var nomeStr = document.getElementById("pNome").value.trim();
+            var catStr = document.getElementById("pCategoria").value;
+            var qtd = parseInt(document.getElementById("pQtd").value) || 0;
+            var min = parseInt(document.getElementById("pMin").value) || 0;
+
+            if(!nomeStr) return alert("Preencha o nome do produto.");
+
+            var dados = {
+                nome: nomeStr,
+                categoria: catStr,
+                quantidade: qtd,
+                minimo: min,
+                criadoEm: new Date().toISOString()
+            };
+
+            if(catStr === "Vacinas") {
+                dados.vacina_padrao = document.getElementById("pVacinaPadrao").value;
+                dados.lote = document.getElementById("pLote").value;
+                dados.validade = document.getElementById("pValidade").value;
+            } else if(catStr === "Medicamentos" || catStr === "Testes") {
+                dados.lote = document.getElementById("pLote").value;
+                dados.validade = document.getElementById("pValidade").value;
+            }
+
+            document.getElementById("btnSalvarProduto").innerText = "Salvando...";
+            try {
+                await db.collection("estoque").add(dados);
+                fecharModalProduto();
+                carregarEstoque();
+                document.getElementById("btnSalvarProduto").innerText = "SALVAR ITEM";
+            } catch(e) { alert("Erro"); }
+        }
+
+        // --- INJETOR DE DADOS (Pressione o botão no fim da tela) ---
+
+    </script>
+</body>
+</html>

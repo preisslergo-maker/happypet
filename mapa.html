@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#4ECDC4">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Painel de Logística - Happy Pet</title>
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    
+    <style>
+        :root {
+            --primary: #4ECDC4;
+            --secondary: #FF6B6B;
+            --bg-app: #F7F9FC;
+            --card-white: #FFFFFF;
+            --text-main: #2D3436;
+            --text-muted: #636e72;
+            --waze: #33ccff;
+            --radar: #9b59b6;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Roboto, sans-serif; 
+            background-color: var(--bg-app); 
+            margin: 0; 
+            color: var(--text-main);
+            padding-bottom: 50px;
+        }
+
+        .top-bar-app {
+            background: linear-gradient(135deg, var(--primary), #45b7af);
+            padding: 30px 25px 20px 25px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-radius: 0 0 25px 25px;
+            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .btn-back-nav { 
+            background: rgba(255,255,255,0.2); border: none; color: white; 
+            width: 35px; height: 35px; border-radius: 10px; 
+            display: flex; align-items: center; justify-content: center; cursor: pointer; 
+        }
+
+        .container { padding: 20px; }
+
+        /* Abas de Navegação */
+        .tabs-mapa { display: flex; gap: 10px; margin-bottom: 25px; }
+        .tab-btn {
+            flex: 1; background: white; border: 2px solid #EEE; padding: 15px 10px;
+            border-radius: 15px; font-weight: 800; color: var(--text-muted);
+            cursor: pointer; text-align: center; font-size: 0.9rem; transition: 0.3s;
+        }
+        .tab-btn.active.rota { background: var(--waze); color: white; border-color: var(--waze); box-shadow: 0 4px 15px rgba(51, 204, 255, 0.3); }
+        .tab-btn.active.radar { background: var(--radar); color: white; border-color: var(--radar); box-shadow: 0 4px 15px rgba(155, 89, 182, 0.3); }
+
+        /* Títulos de Agrupamento Logístico */
+        .titulo-data {
+            font-size: 1.2rem; font-weight: 900; color: var(--text-main);
+            margin: 30px 0 15px 0; border-bottom: 2px solid #EEE; padding-bottom: 8px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        
+        .grupo-bairro {
+            background: #F8F9FA; border-radius: 20px; padding: 15px; margin-bottom: 20px;
+            border-left: 4px solid var(--waze);
+        }
+
+        .titulo-bairro {
+            font-size: 1rem; font-weight: 800; color: var(--waze);
+            margin: 0 0 15px 0; display: flex; align-items: center; gap: 6px;
+        }
+
+        /* Estilo dos Cards de Cliente */
+        .cliente-card {
+            background: var(--card-white); border-radius: 15px; padding: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03); margin-bottom: 12px;
+            border: 1px solid #EEE;
+        }
+        
+        .cli-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+        .cli-nome { font-weight: 800; font-size: 1.05rem; color: var(--text-main); margin-bottom: 4px; display: block; }
+        .cli-hora { color: var(--waze); font-weight: 900; font-size: 1.1rem; background: #F0F9FF; padding: 3px 8px; border-radius: 8px; margin-right: 8px; }
+        .cli-end { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; display: block; line-height: 1.4; }
+
+        /* Botões de Ação do Card */
+        .botoes-acao { display: flex; gap: 10px; margin-top: 10px; }
+        
+        .btn-waze {
+            flex: 2; background: #F0F9FF; color: #0099CC; border: 1px solid #B3E5FC;
+            padding: 12px; border-radius: 12px; font-weight: 800; font-size: 0.85rem;
+            display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none;
+        }
+        
+        .btn-zap-rota {
+            flex: 1; background: #E8F5E9; color: #25D366; border: 1px solid #C8E6C9;
+            padding: 12px; border-radius: 12px; font-weight: 800; font-size: 1.2rem;
+            display: flex; align-items: center; justify-content: center; text-decoration: none;
+        }
+
+        /* Radar de Vendas */
+        .cliente-card.radar-card { border-left: 4px solid var(--radar); border-radius: 15px; background: white; }
+        .alerta-oportunidade {
+            background: #FFF5F5; border: 1px dashed var(--secondary); padding: 10px;
+            border-radius: 12px; margin-top: 10px; font-size: 0.8rem; color: var(--secondary);
+            font-weight: 700; display: flex; align-items: center; gap: 8px;
+        }
+        
+        .select-bairro {
+            width: 100%; padding: 15px; border: 2px solid var(--radar); border-radius: 15px;
+            font-size: 1rem; font-weight: 800; color: var(--text-main); background: white;
+            margin-bottom: 20px; outline: none; appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg fill="%239b59b6" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+            background-repeat: no-repeat; background-position-x: 95%; background-position-y: 50%;
+        }
+
+        .secao-conteudo { display: none; animation: fadeIn 0.4s; }
+        .secao-conteudo.ativa { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    </style>
+</head>
+<body>
+
+    <header class="top-bar-app">
+        <button class="btn-back-nav" onclick="window.location.href='home.html'"><i class="fas fa-chevron-left"></i></button>
+        <h1 style="margin:0; font-size: 1.1rem; font-weight: 800;">Logística e Rotas</h1>
+    </header>
+
+    <main class="container">
+        
+        <div class="tabs-mapa">
+            <div class="tab-btn active rota" id="tabRota" onclick="mudarAba('rota')">
+                <i class="fas fa-car-side"></i> Rotas Agendadas
+            </div>
+            <div class="tab-btn radar" id="tabRadar" onclick="mudarAba('radar')">
+                <i class="fas fa-satellite-dish"></i> Radar de Vendas
+            </div>
+        </div>
+
+        <div id="conteudoRota" class="secao-conteudo ativa">
+            <p style="font-size:0.85rem; color:#999; margin-top:-10px; margin-bottom:10px; text-align:center;">As suas próximas visitas agrupadas por região.</p>
+            
+            <div id="listaLogistica">
+                <p style="text-align: center; color: #999; margin-top:30px;"><i class="fas fa-spinner fa-spin"></i> Carregando suas rotas...</p>
+            </div>
+        </div>
+
+        <div id="conteudoRadar" class="secao-conteudo">
+            <p style="font-size:0.85rem; color:#999; margin-top:-10px; margin-bottom:15px; text-align:center;">Escolha um bairro para ver quem precisa de visita lá!</p>
+
+            <select id="selBairro" class="select-bairro" onchange="escanearBairro()">
+                <option value="">Selecione um Bairro...</option>
+                </select>
+
+            <div id="listaRadarResultados">
+                <div style="text-align:center; padding:30px 20px; background:#F9F9F9; border-radius:20px; border:2px dashed #DDD;">
+                    <i class="fas fa-search-location" style="font-size:3rem; color:#CCC; margin-bottom:15px;"></i>
+                    <p style="color:#999; font-weight:600; font-size:0.9rem;">Selecione um bairro acima para vasculhar as fichas clínicas.</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="js/firebase-config.js"></script>
+
+    <script>
+        /* global db */
+        
+        let clientesCache = [];
+        let telefonesDict = {}; // Para o botão do WhatsApp nas rotas
+        let bairrosUnicos = [];
+
+        window.onload = function() {
+            carregarTudo();
+        };
+
+        // Lógica de Abas
+        function mudarAba(aba) {
+            document.getElementById("tabRota").className = "tab-btn rota";
+            document.getElementById("tabRadar").className = "tab-btn radar";
+            document.getElementById("conteudoRota").className = "secao-conteudo";
+            document.getElementById("conteudoRadar").className = "secao-conteudo";
+
+            if(aba === "rota") {
+                document.getElementById("tabRota").classList.add("active");
+                document.getElementById("conteudoRota").classList.add("ativa");
+            } else {
+                document.getElementById("tabRadar").classList.add("active");
+                document.getElementById("conteudoRadar").classList.add("ativa");
+            }
+        }
+
+        async function carregarTudo() {
+            try {
+                // 1. Puxa todos os clientes (Para o Radar e para pegar os telefones)
+                const snapCli = await db.collection("clientes").get();
+                snapCli.forEach(function(doc) {
+                    let c = doc.data();
+                    c.id = doc.id;
+                    clientesCache.push(c);
+                    
+                    if(c.telefone) {
+                        telefonesDict[c.id] = c.telefone.replace(/\D/g, "");
+                    }
+
+                    if(c.bairro && c.bairro !== "N/I") {
+                        let bFormatado = c.bairro.trim().toUpperCase();
+                        if(!bairrosUnicos.includes(bFormatado)) bairrosUnicos.push(bFormatado);
+                    }
+                });
+
+                bairrosUnicos.sort();
+                preencherSelectBairros();
+
+                // 2. Puxa os agendamentos futuros
+                renderizarLogisticaDiaria();
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById("listaLogistica").innerHTML = "<p style='color:red; text-align:center;'>Erro ao carregar dados.</p>";
+            }
+        }
+
+        function preencherSelectBairros() {
+            let select = document.getElementById("selBairro");
+            for(let i=0; i < bairrosUnicos.length; i++) {
+                let opt = document.createElement("option");
+                opt.value = bairrosUnicos[i];
+                opt.textContent = bairrosUnicos[i];
+                select.appendChild(opt);
+            }
+        }
+
+        // --- A MÁGICA DA LOGÍSTICA: AGRUPAR POR DATA E BAIRRO ---
+        async function renderizarLogisticaDiaria() {
+            let container = document.getElementById("listaLogistica");
+            let hojeStr = new Date().toISOString().split('T')[0];
+
+            try {
+                // Puxa agendamentos a partir de hoje (bypass de erro de index fazendo o sort em JS)
+                const snapAg = await db.collection("agendamentos").where("data", ">=", hojeStr).get();
+                
+                let agendamentosPuros = [];
+                snapAg.forEach(function(doc) { agendamentosPuros.push(doc.data()); });
+
+                if (agendamentosPuros.length === 0) {
+                    container.innerHTML = "<div style='text-align:center; padding:30px 20px; background:white; border-radius:20px;'><i class='fas fa-mug-hot' style='font-size:3rem; color:#CCC; margin-bottom:15px;'></i><p style='color:#999;'>Sua agenda externa está vazia para os próximos dias.</p></div>";
+                    return;
+                }
+
+                // Organizar os dados em Grupos: Data -> Bairro -> Array de Agendamentos
+                let gruposLogistica = {};
+
+                for (let i = 0; i < agendamentosPuros.length; i++) {
+                    let ag = agendamentosPuros[i];
+                    let dataAg = ag.data || "Sem Data";
+                    let bairroAg = ag.bairro || "Sem Bairro";
+
+                    if (!gruposLogistica[dataAg]) gruposLogistica[dataAg] = {};
+                    if (!gruposLogistica[dataAg][bairroAg]) gruposLogistica[dataAg][bairroAg] = [];
+
+                    gruposLogistica[dataAg][bairroAg].push(ag);
+                }
+
+                let htmlFinal = "";
+                let datasOrdenadas = Object.keys(gruposLogistica).sort();
+
+                for (let i = 0; i < datasOrdenadas.length; i++) {
+                    let dataObj = datasOrdenadas[i];
+                    let dataBrasileira = dataObj.split('-').reverse().join('/');
+                    
+                    let diaSemana = "Hoje";
+                    if (dataObj !== hojeStr) {
+                        diaSemana = new Date(dataObj + "T12:00:00").toLocaleDateString('pt-BR', { weekday: 'long' });
+                        diaSemana = diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1);
+                    }
+
+                    // Título da Data (Ex: 24/02/2026 - Terça-feira)
+                    htmlFinal += "<h2 class='titulo-data'><i class='fas fa-calendar-day' style='color:var(--primary);'></i> " + dataBrasileira + " <span style='font-size:0.8rem; color:#999; font-weight:600;'>(" + diaSemana + ")</span></h2>";
+
+                    let bairrosDestaData = Object.keys(gruposLogistica[dataObj]).sort();
+
+                    // Agrupamento por Bairro
+                    for (let j = 0; j < bairrosDestaData.length; j++) {
+                        let bairroAtual = bairrosDestaData[j];
+                        let consultas = gruposLogistica[dataObj][bairroAtual];
+
+                        // Ordenar consultas do bairro por Horário
+                        consultas.sort(function(a, b) { return (a.hora || "00:00").localeCompare(b.hora || "00:00"); });
+
+                        htmlFinal += "<div class='grupo-bairro'>";
+                        htmlFinal += "  <h3 class='titulo-bairro'><i class='fas fa-map-marker-alt'></i> Região: " + bairroAtual.toUpperCase() + "</h3>";
+
+                        // Cards das Consultas
+                        for (let k = 0; k < consultas.length; k++) {
+                            let c = consultas[k];
+                            
+                            let enderecoCompleto = (c.endereco || "") + " - " + bairroAtual;
+                            let linkWaze = "https://waze.com/ul?q=" + encodeURIComponent(enderecoCompleto) + "&navigate=yes";
+                            
+                            let telZap = telefonesDict[c.tutorId];
+                            let msgZap = encodeURIComponent("Olá " + c.nomeTutor + ", tudo bem? Estou a caminho para a consulta do " + c.petNome + "!");
+                            let linkZap = telZap ? "https://wa.me/55" + telZap + "?text=" + msgZap : "#";
+
+                            htmlFinal += "  <div class='cliente-card'>";
+                            htmlFinal += "    <div class='cli-header'>";
+                            htmlFinal += "      <div><span class='cli-nome'><span class='cli-hora'>" + (c.hora || "--:--") + "</span> " + c.nomeTutor + "</span>";
+                            htmlFinal += "      <span class='cli-end'>🐾 <b>" + c.petNome + "</b> | " + (c.motivo || "Rotina") + "<br>📍 " + (c.endereco || "Endereço não informado") + "</span></div>";
+                            htmlFinal += "    </div>";
+                            
+                            htmlFinal += "    <div class='botoes-acao'>";
+                            htmlFinal += "      <a href='" + linkWaze + "' class='btn-waze'><i class='fab fa-waze' style='font-size:1.2rem;'></i> NAVEGAR</a>";
+                            if (telZap) {
+                                htmlFinal += "      <a href='" + linkZap + "' target='_blank' class='btn-zap-rota'><i class='fab fa-whatsapp'></i></a>";
+                            }
+                            htmlFinal += "    </div>";
+                            htmlFinal += "  </div>";
+                        }
+                        
+                        htmlFinal += "</div>"; // Fecha grupo-bairro
+                    }
+                }
+
+                container.innerHTML = htmlFinal;
+
+            } catch (error) {
+                console.error("Erro na Logística", error);
+                container.innerHTML = "<p style='color:red;'>Falha ao organizar rotas.</p>";
+            }
+        }
+
+        // --- RADAR DE VENDAS (Aba 2 - Buscar Oportunidades no Bairro) ---
+        async function escanearBairro() {
+            let bairroAlvo = document.getElementById("selBairro").value;
+            let container = document.getElementById("listaRadarResultados");
+            
+            if(!bairroAlvo) return;
+
+            container.innerHTML = "<p style='text-align:center;'><i class='fas fa-spinner fa-spin'></i> Varrido fichas em " + bairroAlvo + "...</p>";
+
+            let clientesDaRegiao = clientesCache.filter(function(c) {
+                return c.bairro && c.bairro.trim().toUpperCase() === bairroAlvo;
+            });
+
+            if(clientesDaRegiao.length === 0) {
+                container.innerHTML = "<p style='text-align:center; color:#999;'>Nenhum cliente cadastrado neste bairro ainda.</p>";
+                return;
+            }
+
+            let htmlFinal = "";
+            let limiteRenovacao = new Date();
+            limiteRenovacao.setDate(new Date().getDate() + 30); 
+
+            for(let i=0; i < clientesDaRegiao.length; i++) {
+                let cli = clientesDaRegiao[i];
+                let telLimpo = telefonesDict[cli.id] || "";
+                let alertasTexto = "";
+                let temOportunidade = false;
+
+                try {
+                    let snapPets = await db.collection("clientes").doc(cli.id).collection("pets").get();
+                    
+                    snapPets.forEach(function(docP) {
+                        let p = docP.data();
+                        if (p.vacinas && p.vacinas.length > 0) {
+                            for (let v = 0; v < p.vacinas.length; v++) {
+                                let vac = p.vacinas[v];
+                                if (vac.data_revacina && new Date(vac.data_revacina) <= limiteRenovacao) {
+                                    temOportunidade = true;
+                                    let dtFmt = vac.data_revacina.split('-').reverse().join('/');
+                                    alertasTexto += "🐾 <b>" + p.nome + "</b>: " + vac.nome + " (vence " + dtFmt + ")<br>";
+                                }
+                            }
+                        } else if(p.data_revacina && p.data_revacina !== "2099-12-31" && new Date(p.data_revacina) <= limiteRenovacao) {
+                            temOportunidade = true;
+                            let dtFmtG = p.data_revacina.split('-').reverse().join('/');
+                            alertasTexto += "🐾 <b>" + p.nome + "</b>: Vacina/Revisão (vence " + dtFmtG + ")<br>";
+                        }
+                    });
+                } catch(e) { console.error("Erro pet radar", e); }
+
+                let enderecoRadar = cli.endereco + ", " + (cli.numero || "S/N") + " - " + cli.bairro;
+                let linkWazeRadar = "https://waze.com/ul?q=" + encodeURIComponent(enderecoRadar) + "&navigate=yes";
+                
+                let textoZapRadar = temOportunidade 
+                    ? "Olá " + cli.nome + "! Vou atender aí em " + cli.bairro + " hoje. Aproveitando, vi aqui na ficha que temos vacinas pendentes para atualizar. Quer que eu dê um pulo aí para isentar a taxa de deslocamento?" 
+                    : "Olá " + cli.nome + "! Vou atender na região de " + cli.bairro + " hoje. Precisam de alguma coisa?";
+                
+                let linkZapRadar = telLimpo ? "https://wa.me/55" + telLimpo + "?text=" + encodeURIComponent(textoZapRadar) : "#";
+
+                htmlFinal += "<div class='cliente-card radar-card'>";
+                htmlFinal += "  <div class='cli-header'>";
+                htmlFinal += "    <div><span class='cli-nome'>" + cli.nome + "</span><span class='cli-end'>" + cli.endereco + "</span></div>";
+                htmlFinal += "  </div>";
+                
+                if(temOportunidade) htmlFinal += "  <div class='alerta-oportunidade'><i class='fas fa-bell'></i><div>" + alertasTexto + "</div></div>";
+
+                htmlFinal += "  <div class='botoes-acao'>";
+                htmlFinal += "    <a href='" + linkWazeRadar + "' class='btn-waze' style='background:#F4ECF7; color:#8E44AD; border-color:#D7BDE2;'><i class='fab fa-waze'></i> WAZE</a>";
+                if(telLimpo) htmlFinal += "    <a href='" + linkZapRadar + "' target='_blank' class='btn-zap-rota'><i class='fab fa-whatsapp'></i> ABORDAR</a>";
+                htmlFinal += "  </div>";
+                htmlFinal += "</div>";
+            }
+
+            container.innerHTML = htmlFinal;
+        }
+
+    </script>
+</body>
+</html>

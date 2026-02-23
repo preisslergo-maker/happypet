@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#4ECDC4">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Financeiro Geral - Happy Pet</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --primary: #4ECDC4;
+            --secondary: #FF6B6B;
+            --bg-app: #F7F9FC;
+            --card-white: #FFFFFF;
+            --text-main: #2D3436;
+            --text-muted: #636e72;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --dark: #2c3e50;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Roboto, sans-serif; 
+            background-color: var(--bg-app); 
+            margin: 0; 
+            color: var(--text-main);
+            padding-bottom: 50px;
+        }
+
+        .top-bar-app {
+            background: linear-gradient(135deg, var(--primary), #45b7af);
+            padding: 30px 25px 20px 25px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-radius: 0 0 25px 25px;
+            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .btn-back-nav { 
+            background: rgba(255,255,255,0.2); 
+            border: none; color: white; 
+            width: 35px; height: 35px; 
+            border-radius: 10px; 
+            display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; 
+        }
+
+        .container { padding: 20px; }
+
+        /* Dashboard de Resumo (Números Grandes) */
+        .grid-resumo {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .card-resumo {
+            background: var(--card-white);
+            padding: 15px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .card-resumo.destaque {
+            grid-column: 1 / -1;
+            background: var(--dark);
+            color: white;
+            box-shadow: 0 8px 20px rgba(44, 62, 80, 0.3);
+        }
+
+        .card-resumo span { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); }
+        .card-resumo.destaque span { color: #a4b0be; }
+        .card-resumo h3 { margin: 0; font-size: 1.4rem; font-weight: 900; }
+        .card-resumo.destaque h3 { font-size: 2rem; color: var(--success); }
+
+        .cor-entrada { color: var(--success); }
+        .cor-saida { color: var(--secondary); }
+        .cor-pendente { color: var(--warning); }
+
+        /* Botão Ação Rápida */
+        .btn-p-solid { 
+            width: 100%; 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 18px; 
+            border-radius: 18px; 
+            font-weight: 800; 
+            font-size: 1rem; 
+            cursor: pointer; 
+            box-shadow: 0 6px 20px rgba(78, 205, 196, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        /* Seções e Listas */
+        .section-title { font-size: 1.1rem; font-weight: 900; margin: 0 0 15px 5px; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+        
+        .list-card {
+            background: var(--card-white);
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 5px solid #DDD;
+        }
+        .b-red { border-left-color: var(--secondary); }
+        .b-green { border-left-color: var(--success); }
+        .b-yellow { border-left-color: var(--warning); }
+
+        .list-info strong { display: block; font-size: 1rem; color: var(--text-main); }
+        .list-info small { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
+
+        .list-value { text-align: right; }
+        .list-value strong { display: block; font-size: 1.1rem; }
+        
+        .btn-zap-mini {
+            background: #25D366; color: white; border: none; width: 35px; height: 35px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-left: 10px; text-decoration: none;
+        }
+
+        /* Modal Sheet */
+        .modal-sheet { display:none; position:fixed; bottom:0; left:0; width:100%; height:85%; background:white; border-radius:30px 30px 0 0; box-shadow:0 -10px 30px rgba(0,0,0,0.2); z-index:2000; padding:25px; box-sizing:border-box; overflow-y:auto; animation: slideSheet 0.4s cubic-bezier(0.25, 1, 0.5, 1); }
+        @keyframes slideSheet { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .modal-input { width:100%; border:1px solid #EEE; border-radius:12px; padding:15px; font-family:inherit; margin-bottom:15px; background:#F9F9F9; outline:none; font-size:1rem; box-sizing: border-box; }
+        .label-modal { font-size: 0.75rem; font-weight: 800; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 5px; }
+
+    </style>
+</head>
+<body>
+
+    <header class="top-bar-app">
+        <button class="btn-back-nav" onclick="window.location.href='home.html'"><i class="fas fa-chevron-left"></i></button>
+        <h1 style="margin:0; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.5px;">Painel Financeiro</h1>
+    </header>
+
+    <main class="container">
+        
+        <div class="grid-resumo">
+            <div class="card-resumo destaque">
+                <span>Lucro Líquido (Mês)</span>
+                <h3 id="txtLucro">R$ 0,00</h3>
+            </div>
+            
+            <div class="card-resumo">
+                <span>Faturamento (Mês)</span>
+                <h3 id="txtFaturamento" class="cor-entrada">R$ 0,00</h3>
+            </div>
+
+            <div class="card-resumo">
+                <span>Despesas (Mês)</span>
+                <h3 id="txtDespesas" class="cor-saida">R$ 0,00</h3>
+            </div>
+
+            <div class="card-resumo">
+                <span>Entrou Hoje</span>
+                <h3 id="txtHoje" style="color: #3498db;">R$ 0,00</h3>
+            </div>
+
+            <div class="card-resumo">
+                <span>Total a Receber</span>
+                <h3 id="txtInadimplentes" class="cor-pendente">R$ 0,00</h3>
+            </div>
+        </div>
+
+        <button class="btn-p-solid" style="background: var(--secondary); box-shadow: 0 6px 20px rgba(255, 107, 107, 0.3);" onclick="abrirModalDespesa()">
+            <i class="fas fa-minus-circle"></i> LANÇAR DESPESA
+        </button>
+
+        <h3 class="section-title"><i class="fas fa-exclamation-triangle cor-saida"></i> Devedores</h3>
+        <div id="listaDevedores" style="margin-bottom: 30px;">
+            <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem;"><i class="fas fa-spinner fa-spin"></i> Buscando...</p>
+        </div>
+
+        <h3 class="section-title"><i class="fas fa-file-invoice-dollar cor-pendente"></i> Orçamentos em Aberto</h3>
+        <div id="listaOrcamentos" style="margin-bottom: 30px;">
+            <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem;">Buscando...</p>
+        </div>
+
+        <h3 class="section-title"><i class="fas fa-hand-holding-usd cor-entrada"></i> Últimas Entradas</h3>
+        <div id="listaEntradas">
+            <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem;">Buscando...</p>
+        </div>
+
+    </main>
+
+    <div id="modalDespesa" class="modal-sheet">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h3 style="font-weight:900; margin:0; color:var(--secondary);"><i class="fas fa-receipt"></i> Nova Despesa</h3>
+            <button onclick="fecharModalDespesa()" style="background:none; border:none; color:var(--text-muted); font-weight:800; cursor:pointer;">FECHAR</button>
+        </div>
+
+        <label class="label-modal">Descrição do Gasto</label>
+        <input type="text" id="descDespesa" class="modal-input" placeholder="Ex: Posto de Gasolina, Distribuidora...">
+
+        <div style="display:flex; gap:10px;">
+            <div style="flex:1;">
+                <label class="label-modal">Valor (R$)</label>
+                <input type="number" id="valorDespesa" class="modal-input" placeholder="0.00" step="0.01">
+            </div>
+            <div style="flex:1;">
+                <label class="label-modal">Data</label>
+                <input type="date" id="dataDespesa" class="modal-input">
+            </div>
+        </div>
+
+        <label class="label-modal">Categoria</label>
+        <select id="catDespesa" class="modal-input">
+            <option value="Combustível">Combustível</option>
+            <option value="Materiais Clínicos">Materiais Clínicos</option>
+            <option value="Medicamentos">Medicamentos</option>
+            <option value="Impostos/Taxas">Impostos/Taxas</option>
+            <option value="Outros">Outros</option>
+        </select>
+
+        <button onclick="salvarDespesa()" id="btnSalvarDespesa" class="btn-p-solid" style="background:var(--secondary); margin-top:15px;">
+            REGISTRAR DESPESA
+        </button>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="js/firebase-config.js"></script>
+
+    <script>
+        /* global db */
+        
+        // Formatar Moeda
+        function formatarReal(valor) {
+            return "R$ " + parseFloat(valor).toFixed(2).replace(".", ",");
+        }
+
+        window.onload = function() {
+            document.getElementById("dataDespesa").value = new Date().toISOString().split("T")[0];
+            carregarDashboardFinanceiro();
+        };
+
+        async function carregarDashboardFinanceiro() {
+            const dataHojeObj = new Date();
+            const mesAtualPrefixo = dataHojeObj.toISOString().slice(0, 7); // YYYY-MM
+            const dataHojeStr = dataHojeObj.toISOString().slice(0, 10); // YYYY-MM-DD
+
+            let totalFaturamentoMes = 0;
+            let totalDespesasMes = 0;
+            let totalEntrouHoje = 0;
+            let totalDevedores = 0;
+
+            try {
+                // 1. BUSCAR DEVEDORES (Clientes com total_pendencia > 0)
+                const snapClientes = await db.collection("clientes").where("total_pendencia", ">", 0).get();
+                const divDevedores = document.getElementById("listaDevedores");
+                divDevedores.innerHTML = "";
+
+                if (snapClientes.empty) {
+                    divDevedores.innerHTML = "<p style='color:var(--text-muted); font-size:0.9rem;'>Nenhum cliente com dívida. Maravilha!</p>";
+                } else {
+                    snapClientes.forEach(function(doc) {
+                        const c = doc.data();
+                        totalDevedores += c.total_pendencia;
+                        
+                        // Lógica do botão de WhatsApp
+                        let telLimpo = "";
+                        let btnZap = "";
+                        if (c.telefone) {
+                            telLimpo = c.telefone.replace(/\D/g, "");
+                            const msgText = encodeURIComponent("Olá " + c.nome + ", tudo bem? Aqui é da clínica Happy Pet. Estou passando para lembrar que consta um valor em aberto de " + formatarReal(c.total_pendencia) + " no nosso sistema. Como prefere acertar?");
+                            btnZap = "<a href='https://wa.me/55" + telLimpo + "?text=" + msgText + "' target='_blank' class='btn-zap-mini'><i class='fab fa-whatsapp'></i></a>";
+                        }
+
+                        const card = document.createElement("div");
+                        card.className = "list-card b-red";
+                        card.onclick = function(e) { if(e.target.tagName !== 'I' && e.target.tagName !== 'A') window.location.href = "perfil_cliente.html?tutorId=" + doc.id; };
+                        card.innerHTML = "<div class='list-info'><strong>" + c.nome + "</strong><small>Pendência</small></div><div style='display:flex; align-items:center;'><div class='list-value cor-saida'><strong>" + formatarReal(c.total_pendencia) + "</strong></div>" + btnZap + "</div>";
+                        divDevedores.appendChild(card);
+                    });
+                }
+                document.getElementById("txtInadimplentes").innerText = formatarReal(totalDevedores);
+
+                // 2. BUSCAR DESPESAS DO MÊS
+                const snapDespesas = await db.collection("despesas").orderBy("data", "desc").get();
+                snapDespesas.forEach(function(doc) {
+                    const d = doc.data();
+                    if (d.data && d.data.startsWith(mesAtualPrefixo)) {
+                        totalDespesasMes += parseFloat(d.valor || 0);
+                    }
+                });
+                document.getElementById("txtDespesas").innerText = formatarReal(totalDespesasMes);
+
+                // 3. BUSCAR ENTRADAS E ORÇAMENTOS (CollectionGroup 'historico')
+                // Pega os últimos 100 registros para evitar travamentos e indexações complexas no Firebase
+                const snapHist = await db.collectionGroup("historico").orderBy("data", "desc").limit(100).get();
+                const divEntradas = document.getElementById("listaEntradas");
+                const divOrcamentos = document.getElementById("listaOrcamentos");
+                divEntradas.innerHTML = "";
+                divOrcamentos.innerHTML = "";
+
+                let temOrcamento = false;
+                let contEntradas = 0;
+
+                snapHist.forEach(function(doc) {
+                    const h = doc.data();
+                    const dataHistStr = h.data ? h.data.split("T")[0] : "";
+                    
+                    // Somatórias do Mês e de Hoje (Apenas Recibos)
+                    if (h.tipo === "recibo") {
+                        const valorPagoHist = parseFloat(h.valorPago || 0);
+                        if (dataHistStr.startsWith(mesAtualPrefixo)) {
+                            totalFaturamentoMes += valorPagoHist;
+                        }
+                        if (dataHistStr === dataHojeStr) {
+                            totalEntrouHoje += valorPagoHist;
+                        }
+
+                        // Mostrar as últimas 15 entradas na tela
+                        if (contEntradas < 15) {
+                            const cardE = document.createElement("div");
+                            cardE.className = "list-card b-green";
+                            const fPgto = h.pagamento ? " - " + h.pagamento : "";
+                            const dataFmt = dataHistStr.split('-').reverse().join('/');
+                            cardE.innerHTML = "<div class='list-info'><strong>Recibo " + fPgto + "</strong><small>" + dataFmt + "</small></div><div class='list-value cor-entrada'><strong>+ " + formatarReal(valorPagoHist) + "</strong></div>";
+                            divEntradas.appendChild(cardE);
+                            contEntradas++;
+                        }
+                    }
+
+                    // Listar Orçamentos que ainda estão como "pendente" ou apenas "orcamento"
+                    if (h.tipo === "orcamento") {
+                        temOrcamento = true;
+                        const cardO = document.createElement("div");
+                        cardO.className = "list-card b-yellow";
+                        const dataFmtO = dataHistStr.split('-').reverse().join('/');
+                        cardO.innerHTML = "<div class='list-info'><strong>Orçamento Gerado</strong><small>" + dataFmtO + "</small></div><div class='list-value cor-pendente'><strong>" + formatarReal(h.total || 0) + "</strong></div>";
+                        divOrcamentos.appendChild(cardO);
+                    }
+                });
+
+                if (contEntradas === 0) divEntradas.innerHTML = "<p style='color:var(--text-muted); font-size:0.9rem;'>Nenhuma entrada recente.</p>";
+                if (!temOrcamento) divOrcamentos.innerHTML = "<p style='color:var(--text-muted); font-size:0.9rem;'>Nenhum orçamento pendente.</p>";
+
+                // ATUALIZAR NÚMEROS FINAIS
+                document.getElementById("txtFaturamento").innerText = formatarReal(totalFaturamentoMes);
+                document.getElementById("txtHoje").innerText = formatarReal(totalEntrouHoje);
+                
+                const lucro = totalFaturamentoMes - totalDespesasMes;
+                document.getElementById("txtLucro").innerText = formatarReal(lucro);
+
+            } catch (error) {
+                console.error("Erro ao carregar dados:", error);
+                document.getElementById("listaDevedores").innerHTML = "<p style='color:red;'>Erro de conexão.</p>";
+            }
+        }
+
+        // --- FUNÇÕES DA DESPESA ---
+        function abrirModalDespesa() {
+            document.getElementById("modalDespesa").style.display = "block";
+        }
+        function fecharModalDespesa() {
+            document.getElementById("modalDespesa").style.display = "none";
+        }
+
+        async function salvarDespesa() {
+            const desc = document.getElementById("descDespesa").value.trim();
+            const valor = parseFloat(document.getElementById("valorDespesa").value);
+            const dataD = document.getElementById("dataDespesa").value;
+            const cat = document.getElementById("catDespesa").value;
+
+            if (!desc || isNaN(valor) || valor <= 0 || !dataD) {
+                return alert("Preencha a descrição, data e um valor válido.");
+            }
+
+            const btn = document.getElementById("btnSalvarDespesa");
+            btn.disabled = true;
+            btn.innerHTML = "Salvando...";
+
+            try {
+                await db.collection("despesas").add({
+                    descricao: desc,
+                    valor: valor,
+                    data: dataD,
+                    categoria: cat,
+                    criadoEm: new Date().toISOString()
+                });
+
+                alert("Despesa registrada com sucesso!");
+                fecharModalDespesa();
+                
+                // Limpar inputs
+                document.getElementById("descDespesa").value = "";
+                document.getElementById("valorDespesa").value = "";
+                
+                // Recarregar os números
+                carregarDashboardFinanceiro();
+
+                btn.disabled = false;
+                btn.innerHTML = "REGISTRAR DESPESA";
+
+            } catch (err) {
+                console.error(err);
+                alert("Erro ao salvar despesa.");
+                btn.disabled = false;
+                btn.innerHTML = "REGISTRAR DESPESA";
+            }
+        }
+    </script>
+</body>
+</html>
