@@ -26,9 +26,9 @@ const Utils = {
     
     // Máscara de CEP
     maskCEP: (v) => {
-        v = v.replace(/\D/g, "");
-        v = v.replace(/^(\d{5})(\d)/, "$1-$2");
-        return v;
+        if (!v) return "";
+        v = v.replace(/\D/g, ""); // Remove o que não é número
+        return v.replace(/^(\d{5})(\d)/, "$1-$2"); // Coloca o traço
     },
 
     // Máscara de CPF
