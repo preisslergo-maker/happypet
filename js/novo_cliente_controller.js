@@ -1,5 +1,5 @@
 /**
- * CONTROLLER - Novo Cadastro Happy Pet (Versão Blindada contra erros de Cópia)
+ * CONTROLLER - Novo Cadastro Happy Pet (Versão Blindada para Colar no GitHub)
  */
 
 let tutorIdAtual = null;
@@ -186,7 +186,6 @@ function configurarEventosPet() {
         const esp = e.target.value;
         const dlRacas = document.getElementById('listaRacasSugestao');
         
-        // MUDANÇA VITAL: Criação das opções de raça SEM usar textos que quebram
         dlRacas.innerHTML = "";
         const racasDaEspecie = bancoRacas[esp] || [];
         for(let i = 0; i < racasDaEspecie.length; i++) {
@@ -242,7 +241,6 @@ function configurarEventosPet() {
         
         listaVacinasTemp.push({ nome: nome, data_aplicacao: dose, data_revacina: revac });
         
-        // MUDANÇA VITAL: Concatenação segura
         const item = document.createElement('div');
         item.style.cssText = "border-left: 3px solid #4ECDC4; padding: 8px; margin-bottom: 5px; background: #eee; border-radius: 5px; font-size: 0.8rem;";
         item.innerHTML = "<b>" + nome + "</b><br><small>Retorno: " + revac.split('-').reverse().join('/') + "</small>";
@@ -310,7 +308,6 @@ function configurarEventosPet() {
     document.getElementById('btnCancelarPet').onclick = limparFormularioPet;
 }
 
-// AUXILIARES
 function preencherCamposTutor(d) {
     document.getElementById('cliNome').value = d.nome || '';
     document.getElementById('cliCpf').value = d.cpf || '';
