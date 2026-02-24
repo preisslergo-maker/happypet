@@ -35,28 +35,35 @@
         .label-p { font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
         .val-p { font-size: 1rem; font-weight: 800; color: var(--text-main); }
         .timeline-scroll { flex-grow: 1; padding: 0 20px; overflow-y: auto; padding-bottom: 20px; }
-        .history-card { background: var(--card-white); border-radius: 18px; padding: 15px; margin-bottom: 15px; border-left: 6px solid #DDD; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+        
+        .history-card { background: var(--card-white); border-radius: 18px; padding: 15px; margin-bottom: 15px; border-left: 6px solid #DDD; box-shadow: 0 4px 10px rgba(0,0,0,0.03); transition: transform 0.2s; }
+        .history-card.interativo:active { transform: scale(0.98); background: #F8F9FA; }
+        
         .t-consulta { border-left-color: var(--primary); }
         .t-vacina { border-left-color: var(--success); }
         .t-exame { border-left-color: #AF52DE; }
         .t-orcamento { border-left-color: #FF9500 !important; }
         .t-recibo { border-left-color: #34C759 !important; }
+        
         .footer-menu-premium { background: var(--card-white); padding: 15px 15px 30px 15px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; border-radius: 30px 30px 0 0; box-shadow: 0 -8px 25px rgba(0,0,0,0.05); }
         .action-btn-p { background: #F8F9FA; border: none; padding: 10px 2px; border-radius: 15px; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 0.65rem; font-weight: 800; cursor: pointer; color: var(--text-main); }
         .action-btn-p i { font-size: 1.2rem; color: var(--primary); }
         .btn-retorno { background: #FFF9F0; }
         .btn-retorno i { color: var(--warning); }
+        
         .modal-sheet { display:none; position:fixed; bottom:0; left:0; width:100%; height:85%; background:white; border-radius:30px 30px 0 0; box-shadow:0 -10px 30px rgba(0,0,0,0.2); z-index:1000; padding:25px; box-sizing:border-box; overflow-y:auto; animation: slideSheet 0.4s cubic-bezier(0.25, 1, 0.5, 1); }
         @keyframes slideSheet { from { transform: translateY(100%); } to { transform: translateY(0); } }
         .modal-input { width:100%; border:1px solid #EEE; border-radius:12px; padding:15px; font-family:inherit; margin-bottom:12px; background:#F9F9F9; outline:none; font-size:1rem; box-sizing: border-box; }
-        #templateReceita { display: none; }
+        
+        .btn-flex-row { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-flex-col { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
     </style>
 </head>
 <body>
 
     <header class="top-bar-app">
         <button class="btn-back-nav" onclick="window.location.href='atendimento.html'"><i class="fas fa-chevron-left"></i></button>
-        <h1 style="margin:0; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.5px;">Atendimento  - Dra Natalia Monteiro</h1>
+        <h1 style="margin:0; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.5px;">Atendimento</h1>
     </header>
 
     <div class="pet-header-premium">
@@ -79,13 +86,14 @@
 
     <div class="timeline-scroll">
         <h3 style="font-size: 0.9rem; font-weight: 800; padding: 10px 5px; color: var(--primary);">HISTÓRICO CLÍNICO</h3>
+        <p style="font-size: 0.75rem; color: #999; margin-top: -10px; margin-left: 5px;">Toque na consulta ou vacina para ver/editar.</p>
         <div id="timelineResumida">
             <p style="text-align: center; color: var(--text-muted); padding-top:20px;">Buscando dados...</p>
         </div>
     </div>
 
     <footer class="footer-menu-premium">
-        <button class="action-btn-p" onclick="document.getElementById('modalConsulta').style.display='block'">
+        <button class="action-btn-p" onclick="abrirModalConsultaNova()">
             <i class="fas fa-notes-medical"></i> Consulta
         </button>
         <button class="action-btn-p" onclick="window.location.href='vacinas.html?petId='+petId+'&tutorId='+tutorId">
@@ -113,18 +121,39 @@
 
     <div id="modalConsulta" class="modal-sheet">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h3 style="font-weight:900;">Nova Consulta</h3>
+            <h3 id="tituloModalConsulta" style="font-weight:900;">Nova Consulta</h3>
             <button onclick="document.getElementById('modalConsulta').style.display='none'" style="background:none; border:none; color:var(--secondary); font-weight:800;">Fechar</button>
         </div>
         <label style="font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase;">Peso do dia (kg)</label>
         <input type="number" id="inputPesoConsulta" step="0.01" class="modal-input" placeholder="0.00">
+        
         <label style="font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase;">Anamnese e Sintomas</label>
         <textarea id="inputAnamnese" class="modal-input" style="height:100px;" placeholder="O que o pet está sentindo?"></textarea>
+        
         <label style="font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase;">Conduta e Tratamento</label>
         <textarea id="inputTratamento" class="modal-input" style="height:100px;" placeholder="Prescrição e recomendações..."></textarea>
-        <div style="display: flex; gap: 12px; margin-top: 5px;">
-            <button onclick="imprimirReceita()" style="flex: 1; background:white; color:var(--primary); border:2px solid var(--primary); padding:16px; border-radius:15px; font-weight:800;">RECEITA</button>
-            <button onclick="salvarConsulta()" id="btnSalvar" style="flex: 2; background:var(--primary); color:white; border:none; padding:16px; border-radius:15px; font-weight:800;">SALVAR</button>
+        
+        <div class="btn-flex-row">
+            <button onclick="imprimirReceita()" style="flex: 1; background:white; color:var(--primary); border:2px solid var(--primary); padding:14px 5px; border-radius:15px; font-weight:800; font-size:0.8rem;">RECEITA</button>
+            <button onclick="imprimirFichaConsulta()" id="btnImprimirFicha" style="display:none; flex: 1; background:white; color:#AF52DE; border:2px solid #AF52DE; padding:14px 5px; border-radius:15px; font-weight:800; font-size:0.8rem;">FICHA</button>
+            <button onclick="salvarConsulta()" id="btnSalvar" style="flex: 1.5; background:var(--primary); color:white; border:none; padding:14px 5px; border-radius:15px; font-weight:800; font-size:0.8rem;">SALVAR</button>
+        </div>
+    </div>
+
+    <div id="modalVacinaDetalhe" class="modal-sheet" style="height: 65%;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h3 style="font-weight:900; color: var(--success);"><i class="fas fa-syringe"></i> Detalhes da Vacina</h3>
+            <button onclick="document.getElementById('modalVacinaDetalhe').style.display='none'" style="background:none; border:none; color:var(--text-muted); font-weight:800;">Fechar</button>
+        </div>
+        <div style="background: #F9F9F9; padding: 20px; border-radius: 15px; border: 1px solid #EEE;">
+            <p style="margin: 0 0 10px 0; font-weight: 900; font-size: 1.3rem; color: var(--text-main);" id="vDetalheNome">--</p>
+            <p style="margin: 5px 0; font-size: 0.95rem;"><strong>Aplicação:</strong> <span id="vDetalheData" style="color:var(--text-muted);">--</span></p>
+            <p style="margin: 5px 0; font-size: 0.95rem;"><strong>Revacinação:</strong> <span id="vDetalheRetorno" style="color:var(--secondary);">--</span></p>
+        </div>
+        <div class="btn-flex-col">
+            <button onclick="imprimirCertificadoVacina()" style="background:var(--success); color:white; border:none; padding:18px; border-radius:15px; font-weight:800; font-size:1rem; box-shadow: 0 4px 15px rgba(52, 199, 89, 0.3);">
+                <i class="fas fa-print"></i> IMPRIMIR CERTIFICADO
+            </button>
         </div>
     </div>
 
@@ -140,28 +169,6 @@
         <button onclick="salvarRetorno()" id="btnSalvarRetorno" style="width:100%; background:var(--warning); color:white; border:none; padding:18px; border-radius:15px; font-weight:800;">CONFIRMAR RETORNO</button>
     </div>
 
-    <div id="templateReceita" style="display: none;">
-        <style>
-            @page { size: A4; margin: 0; }
-            body { margin: 0; padding: 0; font-family: sans-serif; height: 100vh; box-sizing: border-box; }
-            .img-fundo { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
-            .conteudo-receita { position: relative; z-index: 1; padding: 160px 50px 100px 50px; }
-            .dados-paciente { border-bottom: 2px solid #e0c8d4; padding-bottom: 10px; margin-bottom: 20px; }
-            .dados-paciente p { margin: 5px 0; font-size: 18px; color: #333; }
-            .prescricao { font-size: 18px; line-height: 1.8; white-space: pre-wrap; color: #111; min-height: 450px; }
-            .data-local { text-align: right; font-size: 16px; color: #555; }
-        </style>
-        <img src="assets/receita_bg.jpg" class="img-fundo" />
-        <div class="conteudo-receita">
-            <div class="dados-paciente">
-                <p><strong>Paciente:</strong> {{VAR_PET}} &nbsp;|&nbsp; <strong>Raça:</strong> {{VAR_RACA}} &nbsp;|&nbsp; <strong>Peso:</strong> {{VAR_PESO}}</p>
-                <p><strong>Tutor(a):</strong> {{VAR_TUTOR}}</p>
-            </div>
-            <div class="prescricao">{{VAR_TRATAMENTO}}</div>
-            <div class="data-local">Magé, {{VAR_DATA}}</div>
-        </div>
-    </div>
-
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
@@ -172,6 +179,9 @@
         var params = new URLSearchParams(window.location.search);
         var petId = params.get("petId");
         var tutorId = params.get("tutorId");
+        
+        var consultaEditId = null; 
+        var vacinaEditData = null; 
 
         window.onload = carregarDados;
 
@@ -195,7 +205,7 @@
                     }
                 }
 
-                var hSnap = await db.collection("clientes").doc(tutorId).collection("pets").doc(petId).collection("historico").orderBy("data", "desc").limit(15).get();
+                var hSnap = await db.collection("clientes").doc(tutorId).collection("pets").doc(petId).collection("historico").orderBy("data", "desc").limit(20).get();
                 var container = document.getElementById("timelineResumida");
                 container.innerHTML = "";
 
@@ -210,6 +220,16 @@
                     else if (item.tipo === "recibo") tipoCls = "t-recibo";
                     
                     div.className = "history-card " + tipoCls;
+
+                    if (item.tipo === "consulta") {
+                        div.classList.add("interativo");
+                        div.style.cursor = "pointer";
+                        div.onclick = function() { abrirModalConsultaEdicao(doc.id, item); };
+                    } else if (item.tipo === "vacina") {
+                        div.classList.add("interativo");
+                        div.style.cursor = "pointer";
+                        div.onclick = function() { abrirModalDetalheVacina(item); };
+                    }
 
                     var divCabecalho = document.createElement("div");
                     divCabecalho.style.cssText = "display:flex; justify-content:space-between; align-items:center;";
@@ -229,33 +249,25 @@
 
                     if(item.isDocumento && item.template_gerado) {
                         var btnDoc = document.createElement("button");
-                        btnDoc.innerHTML = '\x3Ci class=\x22fas fa-file-pdf\x22\x3E\x3C/i\x3E';
+                        btnDoc.innerHTML = "\x3Ci class=\x22fas fa-file-pdf\x22\x3E\x3C/i\x3E";
                         btnDoc.style.cssText = "background:none; border:none; color:var(--primary); cursor:pointer; font-size:1.1rem;";
-                        btnDoc.onclick = function() { reimprimirDocumento(item.titulo_doc, item.template_gerado, item.data); };
+                        btnDoc.onclick = function(e) { e.stopPropagation(); reimprimirDocumento(item.titulo_doc, item.template_gerado, item.data); };
                         divAcoes.appendChild(btnDoc);
                     }
 
                     if((item.tipo === "orcamento" || item.tipo === "recibo") && item.itens) {
                         var btnFin = document.createElement("button");
-                        btnFin.innerHTML = '\x3Ci class=\x22fas fa-print\x22\x3E\x3C/i\x3E';
+                        btnFin.innerHTML = "\x3Ci class=\x22fas fa-print\x22\x3E\x3C/i\x3E";
                         btnFin.style.cssText = "background:none; border:none; color:var(--warning); cursor:pointer;";
-                        btnFin.onclick = function() { reimprimirFinanceiro(item); };
+                        btnFin.onclick = function(e) { e.stopPropagation(); reimprimirFinanceiro(item); };
                         divAcoes.appendChild(btnFin);
                     }
 
-                    if(item.tipo === "consulta" && item.tratamento) {
-                        var btnP = document.createElement("button");
-                        btnP.innerHTML = '\x3Ci class=\x22fas fa-print\x22\x3E\x3C/i\x3E';
-                        btnP.style.cssText = "background:none; border:none; color:var(--primary); cursor:pointer;";
-                        btnP.onclick = function() { reimprimirReceita(item.tratamento, item.data); };
-                        divAcoes.appendChild(btnP);
-                    }
-                    
                     if(item.tipo === "exame" && !item.isDocumento && item.link_direto) {
                         var btnE = document.createElement("button");
-                        btnE.innerHTML = '\x3Ci class=\x22fas fa-eye\x22\x3E\x3C/i\x3E';
+                        btnE.innerHTML = "\x3Ci class=\x22fas fa-eye\x22\x3E\x3C/i\x3E";
                         btnE.style.cssText = "background:none; border:none; color:#AF52DE; cursor:pointer;";
-                        btnE.onclick = function() { window.open(item.link_direto, "_blank"); };
+                        btnE.onclick = function(e) { e.stopPropagation(); window.open(item.link_direto, "_blank"); };
                         divAcoes.appendChild(btnE);
                     }
 
@@ -266,10 +278,14 @@
                     pDesc.style.cssText = "margin:10px 0 0 0; font-size:0.9rem;";
                     
                     if (item.tipo === "orcamento" || item.tipo === "recibo") {
-                        var listaNomes = item.itens ? item.itens.map(i => i.nome).join(", ") : "Serviços";
+                        var listaNomes = item.itens ? item.itens.map(function(i){ return i.nome; }).join(", ") : "Serviços";
                         pDesc.innerHTML = "\x3Cstrong\x3ETotal: R$ " + item.total.toFixed(2) + "\x3C/strong\x3E\x3Cbr\x3E\x3Csmall\x3E" + listaNomes + "\x3C/small\x3E";
+                    } else if (item.tipo === "vacina") {
+                        // O ANTIDOTO DO BUG DO UNDEFINED ESTÁ AQUI:
+                        var nomeV = item.nome || item.vacina || item.descricao || item.titulo || "Vacina Registrada";
+                        pDesc.innerHTML = "\x3Cstrong\x3E" + nomeV + "\x3C/strong\x3E";
                     } else {
-                        pDesc.innerText = item.anamnese || item.descricao || "Sem detalhes";
+                        pDesc.innerText = item.anamnese || item.descricao || "Sem detalhes. Toque para editar.";
                     }
                     
                     div.appendChild(pDesc);
@@ -278,29 +294,58 @@
             } catch (e) { console.error(e); }
         }
 
-        function reimprimirFinanceiro(item) {
-            var itensStr = "";
-            item.itens.forEach(i => {
-                itensStr += "\x3Cdiv style=\x22display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding:8px 0;\x22\x3E\x3Cspan\x3E" + i.nome + "\x3C/span\x3E\x3Cspan\x3ER$ " + i.valor.toFixed(2) + "\x3C/span\x3E\x3C/div\x3E";
-            });
-            var dataFmt = new Date(item.data).toLocaleDateString("pt-BR");
-            var pet = document.getElementById("petNome").innerText;
-            
-            var html = "\x3Chtml\x3E\x3Chead\x3E\x3Cstyle\x3Ebody{margin:0;font-family:sans-serif;}.bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;}.content{padding:180px 60px; color:#333;} h2{text-align:center; color:#4ECDC4;}\x3C/style\x3E\x3C/head\x3E\x3Cbody\x3E";
-            html += "\x3Cimg src=\x22assets/receita_bg.jpg\x22 class=\x22bg\x22/\x3E\x3Cdiv class=\x22content\x22\x3E\x3Ch2\x3E" + item.tipo.toUpperCase() + "\x3C/h2\x3E";
-            html += "\x3Cp\x3E\x3Cstrong\x3EPaciente:\x3C/strong\x3E " + pet + "\x3Cbr\x3E\x3Cstrong\x3EData:\x3C/strong\x3E " + dataFmt + "\x3C/p\x3E";
-            html += "\x3Cdiv style=\x22margin:30px 0;\x22\x3E" + itensStr + "\x3C/div\x3E";
-            html += "\x3Cdiv style=\x22text-align:right; font-size:18px;\x22\x3E\x3Cstrong\x3ETOTAL: R$ " + item.total.toFixed(2) + "\x3C/strong\x3E\x3Cbr\x3E";
-            
-            if(item.tipo === "recibo") {
-                html += "Valor Pago: R$ " + item.valorPago.toFixed(2) + "\x3Cbr\x3E";
-                if(item.pendencia > 0) html += "\x3Cstrong style=\x22color:#FF6B6B;\x22\x3EPendente: R$ " + item.pendencia.toFixed(2) + "\x3C/strong\x3E\x3Cbr\x3E";
+        // --- SISTEMA BLINDADO DE IMPRESSÃO (CORREÇÃO SAFARI/iOS) ---
+        function gerarLayoutImpressaoSafari(conteudoPrincipal, mostrarAssinatura) {
+            var dataFmt = new Date().toLocaleDateString("pt-BR", {timeZone: 'UTC'});
+            var assHTML = "";
+            if(mostrarAssinatura) {
+                var tutorTxt = document.getElementById("tutorNome").innerText.replace("Tutor: ", "");
+                assHTML = "\x3Cdiv style=\x22margin-top:60px; display:flex; justify-content:space-between;\x22\x3E" +
+                          "\x3Cdiv style=\x22border-top:1px solid #000; width:45%; text-align:center; padding-top:10px; font-size:14px; margin-top:40px;\x22\x3EAssinatura do Tutor\x3Cbr\x3E" + tutorTxt + "\x3C/div\x3E" +
+                          "\x3Cdiv style=\x22border-top:1px solid #000; width:45%; text-align:center; padding-top:10px; font-size:14px; margin-top:40px;\x22\x3EMédico(a) Veterinário(a)\x3Cbr\x3ENatalia Monteiro\x3Cbr\x3ECRMV-RJ\x3C/div\x3E\x3C/div\x3E";
             }
-            html += "\x3C/div\x3E\x3C/div\x3E\x3Cscript\x3Ewindow.onload=function(){window.print();setTimeout(function(){window.close();},500);}\x3C/script\x3E\x3C/body\x3E\x3C/html\x3E";
 
+            var htmlArr = [
+                "\x3Chtml\x3E\x3Chead\x3E\x3Cstyle\x3E",
+                "@page { size: A4 portrait; margin: 0; }",
+                "body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }",
+                ".page-a4 { position: relative; width: 100%; min-height: 100vh; box-sizing: border-box; overflow: hidden; }",
+                ".bg-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; object-fit: cover; object-position: center top; }",
+                ".content-wrapper { position: relative; z-index: 1; padding: 160px 50px 100px 50px; color: #2D3436; font-size: 16px; line-height: 1.6; }",
+                "\x3C/style\x3E\x3C/head\x3E\x3Cbody\x3E",
+                "\x3Cdiv class=\x22page-a4\x22\x3E",
+                "\x3Cimg src=\x22assets/receita_bg.jpg\x22 class=\x22bg-img\x22 /\x3E",
+                "\x3Cdiv class=\x22content-wrapper\x22\x3E",
+                conteudoPrincipal,
+                "\x3Cp style=\x22text-align:right; margin-top:40px; color: #555;\x22\x3EMagé, " + dataFmt + "\x3C/p\x3E",
+                assHTML,
+                "\x3C/div\x3E\x3C/div\x3E",
+                "\x3Cscript\x3Ewindow.onload=function(){ setTimeout(function(){ window.print(); window.close(); }, 800); }\x3C/script\x3E",
+                "\x3C/body\x3E\x3C/html\x3E"
+            ];
+            
             var win = window.open("", "_blank");
-            win.document.write(html);
+            win.document.write(htmlArr.join(""));
             win.document.close();
+        }
+
+        function abrirModalConsultaNova() {
+            consultaEditId = null;
+            document.getElementById("tituloModalConsulta").innerText = "Nova Consulta";
+            document.getElementById("inputAnamnese").value = "";
+            document.getElementById("inputTratamento").value = "";
+            document.getElementById("btnImprimirFicha").style.display = "none";
+            document.getElementById("modalConsulta").style.display = "block";
+        }
+
+        function abrirModalConsultaEdicao(id, item) {
+            consultaEditId = id;
+            document.getElementById("tituloModalConsulta").innerText = "Editar Consulta";
+            document.getElementById("inputPesoConsulta").value = item.peso_no_dia || "";
+            document.getElementById("inputAnamnese").value = item.anamnese || "";
+            document.getElementById("inputTratamento").value = item.tratamento || "";
+            document.getElementById("btnImprimirFicha").style.display = "block"; 
+            document.getElementById("modalConsulta").style.display = "block";
         }
 
         async function salvarConsulta() {
@@ -310,10 +355,22 @@
             if(!anam) return alert("Preencha a anamnese.");
             var btn = document.getElementById("btnSalvar");
             btn.disabled = true;
+
+            var objSalvamento = {
+                anamnese: anam,
+                tratamento: trat,
+                peso_no_dia: novoPeso || ""
+            };
+
             try {
-                await db.collection("clientes").doc(tutorId).collection("pets").doc(petId).collection("historico").add({
-                    tipo: "consulta", data: new Date().toISOString(), anamnese: anam, tratamento: trat, peso_no_dia: novoPeso || ""
-                });
+                if (consultaEditId) {
+                    await db.collection("clientes").doc(tutorId).collection("pets").doc(petId).collection("historico").doc(consultaEditId).update(objSalvamento);
+                } else {
+                    objSalvamento.tipo = "consulta";
+                    objSalvamento.data = new Date().toISOString();
+                    await db.collection("clientes").doc(tutorId).collection("pets").doc(petId).collection("historico").add(objSalvamento);
+                }
+                
                 if (novoPeso) {
                     await db.collection("clientes").doc(tutorId).collection("pets").doc(petId).update({ peso_atual: novoPeso });
                 }
@@ -322,56 +379,100 @@
         }
 
         function imprimirReceita() {
-            var t = document.getElementById("inputTratamento").value;
-            if(!t) return alert("Sem tratamento.");
-            gerarPdfReceita(t, new Date().toLocaleDateString("pt-BR"));
+            var trat = document.getElementById("inputTratamento").value;
+            if(!trat) return alert("Preencha o tratamento para gerar a receita.");
+            
+            var cabecalhoPaciente = "\x3Cdiv style=\x22border-bottom: 2px solid #e0c8d4; padding-bottom: 10px; margin-bottom: 20px;\x22\x3E" +
+                "\x3Cp style=\x22margin: 5px 0;\x22\x3E\x3Cstrong\x3EPaciente:\x3C/strong\x3E " + document.getElementById("petNome").innerText + " &nbsp;|&nbsp; \x3Cstrong\x3ERaça:\x3C/strong\x3E " + document.getElementById("petRaca").innerText + " &nbsp;|&nbsp; \x3Cstrong\x3EPeso:\x3C/strong\x3E " + document.getElementById("petPeso").innerText + "\x3C/p\x3E" +
+                "\x3Cp style=\x22margin: 5px 0;\x22\x3E\x3Cstrong\x3ETutor(a):\x3C/strong\x3E " + document.getElementById("tutorNome").innerText.replace("Tutor: ", "") + "\x3C/p\x3E\x3C/div\x3E";
+            
+            var conteudo = cabecalhoPaciente + "\x3Cdiv style=\x22min-height: 400px; white-space: pre-wrap;\x22\x3E" + trat + "\x3C/div\x3E";
+            gerarLayoutImpressaoSafari(conteudo, false);
         }
 
-        function reimprimirReceita(trat, dIso) {
-            var dataFmt = new Date(dIso).toLocaleDateString("pt-BR", {timeZone: 'UTC'});
-            gerarPdfReceita(trat, dataFmt);
+        function imprimirFichaConsulta() {
+            var anam = document.getElementById("inputAnamnese").value;
+            var trat = document.getElementById("inputTratamento").value;
+            
+            var cabecalho = "\x3Ch2 style=\x22text-align:center; color:#4ECDC4; margin-bottom:30px; text-transform:uppercase;\x22\x3EFicha Clínica de Atendimento\x3C/h2\x3E" +
+                "\x3Cdiv style=\x22background:#F9F9F9; padding:15px; border-radius:10px; margin-bottom: 20px;\x22\x3E" +
+                "\x3Cp style=\x22margin: 5px 0;\x22\x3E\x3Cstrong\x3EPaciente:\x3C/strong\x3E " + document.getElementById("petNome").innerText + " &nbsp;|&nbsp; \x3Cstrong\x3EPeso Medido:\x3C/strong\x3E " + (document.getElementById("inputPesoConsulta").value || "--") + " kg\x3C/p\x3E" +
+                "\x3Cp style=\x22margin: 5px 0;\x22\x3E\x3Cstrong\x3ETutor(a):\x3C/strong\x3E " + document.getElementById("tutorNome").innerText.replace("Tutor: ", "") + "\x3C/p\x3E\x3C/div\x3E";
+            
+            var corpoAnamnese = "\x3Ch4 style=\x22color:#FF6B6B; margin-bottom:5px;\x22\x3EAnamnese / Histórico\x3C/h4\x3E\x3Cdiv style=\x22white-space: pre-wrap; margin-bottom:20px;\x22\x3E" + (anam || "Sem registro.") + "\x3C/div\x3E";
+            var corpoTrat = "\x3Ch4 style=\x22color:#4ECDC4; margin-bottom:5px;\x22\x3EConduta / Tratamento\x3C/h4\x3E\x3Cdiv style=\x22white-space: pre-wrap; margin-bottom:20px;\x22\x3E" + (trat || "Sem prescrição.") + "\x3C/div\x3E";
+            
+            gerarLayoutImpressaoSafari(cabecalho + corpoAnamnese + corpoTrat, true);
         }
 
-        function gerarPdfReceita(texto, data) {
-            var htmlTemplate = document.getElementById("templateReceita").innerHTML;
-            var htmlFinal = htmlTemplate
-                .replace("{{VAR_PET}}", document.getElementById("petNome").innerText)
-                .replace("{{VAR_TUTOR}}", document.getElementById("tutorNome").innerText.replace("Tutor: ", ""))
-                .replace("{{VAR_RACA}}", document.getElementById("petRaca").innerText)
-                .replace("{{VAR_PESO}}", document.getElementById("petPeso").innerText)
-                .replace("{{VAR_TRATAMENTO}}", texto)
-                .replace("{{VAR_DATA}}", data);
-            var win = window.open("", "", "width=850,height=1100");
-            win.document.write("\x3Chtml\x3E\x3Cbody\x3E" + htmlFinal + "\x3C/body\x3E\x3C/html\x3E");
-            win.document.close();
-            setTimeout(function() { win.print(); win.close(); }, 800);
+        function abrirModalDetalheVacina(item) {
+            vacinaEditData = item;
+            var dataApp = item.data ? item.data.split('T')[0].split('-').reverse().join('/') : "--";
+            var dataRet = item.data_revacina ? item.data_revacina.split('-').reverse().join('/') : "Não especificada";
+
+            // A Rede de Segurança da Vacina ataca novamente aqui:
+            var nomeV = item.nome || item.vacina || item.descricao || item.titulo || "Vacina Registrada";
+            
+            document.getElementById("vDetalheNome").innerText = nomeV;
+            document.getElementById("vDetalheData").innerText = dataApp;
+            document.getElementById("vDetalheRetorno").innerText = dataRet;
+            
+            document.getElementById("modalVacinaDetalhe").style.display = "block";
+        }
+
+        function imprimirCertificadoVacina() {
+            if(!vacinaEditData) return;
+            var v = vacinaEditData;
+            var dataApp = v.data ? v.data.split('T')[0].split('-').reverse().join('/') : "--";
+            var dataRet = v.data_revacina ? v.data_revacina.split('-').reverse().join('/') : "--";
+            
+            var nomeV = v.nome || v.vacina || v.descricao || v.titulo || "Vacina Registrada";
+
+            var cabecalho = "\x3Ch2 style=\x22text-align:center; color:#34C759; margin-bottom:30px; text-transform:uppercase;\x22\x3ECertificado de Vacinação\x3C/h2\x3E";
+            
+            var infoHtml = "\x3Ctable style=\x22width:100%; border-collapse: collapse; margin-bottom:40px;\x22\x3E" +
+                "\x3Ctr\x3E\x3Ctd style=\x22padding:10px; border-bottom:1px solid #CCC;\x22\x3E\x3Cstrong\x3EPaciente:\x3C/strong\x3E " + document.getElementById("petNome").innerText + "\x3C/td\x3E\x3Ctd style=\x22padding:10px; border-bottom:1px solid #CCC;\x22\x3E\x3Cstrong\x3EEspécie/Raça:\x3C/strong\x3E " + document.getElementById("petRaca").innerText + "\x3C/td\x3E\x3C/tr\x3E" +
+                "\x3Ctr\x3E\x3Ctd colspan=\x222\x22 style=\x22padding:10px; border-bottom:1px solid #CCC;\x22\x3E\x3Cstrong\x3ETutor(a):\x3C/strong\x3E " + document.getElementById("tutorNome").innerText.replace("Tutor: ", "") + "\x3C/td\x3E\x3C/tr\x3E" +
+                "\x3C/table\x3E";
+
+            var destaque = "\x3Cdiv style=\x22background:#F0FFF4; padding:25px; border-radius:15px; border-left:6px solid #34C759; text-align:center;\x22\x3E" +
+                "\x3Cp style=\x22margin:0; font-size:24px; font-weight:900; color:#2D3436;\x22\x3E" + nomeV + "\x3C/p\x3E" +
+                "\x3Cp style=\x22margin:15px 0 0 0; font-size:18px;\x22\x3EData da Aplicação: \x3Cstrong\x3E" + dataApp + "\x3C/strong\x3E\x3C/p\x3E" +
+                "\x3Cp style=\x22margin:5px 0 0 0; font-size:18px; color:#FF6B6B;\x22\x3EPróxima Dose: \x3Cstrong\x3E" + dataRet + "\x3C/strong\x3E\x3C/p\x3E" +
+                "\x3C/div\x3E";
+
+            gerarLayoutImpressaoSafari(cabecalho + infoHtml + destaque, true);
         }
 
         function reimprimirDocumento(titulo, texto, dataISO) {
-            const dataFmt = new Date(dataISO).toLocaleDateString("pt-BR", {timeZone: 'UTC'});
-            let htmlArr = [
-                "\x3Chtml\x3E\x3Chead\x3E\x3Cstyle\x3E",
-                "body{margin:0;font-family:sans-serif;}.bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;}",
-                ".content{padding:180px 60px; line-height:1.6; text-align:justify; font-size:16px;}",
-                "h2{text-align:center; text-transform:uppercase; margin-bottom:30px;}",
-                ".ass-area{margin-top:60px; display:flex; justify-content:space-between;}",
-                ".linha{border-top:1px solid #000; width:45%; text-align:center; padding-top:10px; font-size:14px; margin-top:40px;}",
-                "\x3C/style\x3E\x3C/head\x3E\x3Cbody\x3E",
-                "\x3Cimg src='assets/receita_bg.jpg' class='bg' /\x3E",
-                "\x3Cdiv class='content'\x3E",
-                "\x3Ch2\x3E" + titulo + "\x3C/h2\x3E",
-                "\x3Cdiv\x3E" + texto.replace(/\n/g, "\x3Cbr\x3E") + "\x3C/div\x3E",
-                "\x3Cp style='text-align:right; margin-top:40px;'\x3EMagé, " + dataFmt + "\x3C/p\x3E",
-                "\x3Cdiv class='ass-area'\x3E",
-                "\x3Cdiv class='linha'\x3EAssinatura do Tutor\x3Cbr\x3E" + document.getElementById("tutorNome").innerText.replace("Tutor: ", "") + "\x3C/div\x3E",
-                "\x3Cdiv class='linha'\x3EMédico(a) Veterinário(a)\x3Cbr\x3ENatalia Monteiro\x3Cbr\x3ECRMV-RJ\x3C/div\x3E",
-                "\x3C/div\x3E\x3C/div\x3E",
-                "\x3Cscript\x3Ewindow.onload=function(){window.print();setTimeout(function(){window.close();},500);}\x3C/script\x3E",
-                "\x3C/body\x3E\x3C/html\x3E"
-            ];
-            const win = window.open("", "_blank");
-            win.document.write(htmlArr.join(""));
-            win.document.close();
+            var cabecalho = "\x3Ch2 style=\x22text-align:center; text-transform:uppercase; margin-bottom:30px; color:#4ECDC4;\x22\x3E" + titulo + "\x3C/h2\x3E";
+            var corpo = "\x3Cdiv style=\x22text-align:justify; white-space:pre-wrap;\x22\x3E" + texto + "\x3C/div\x3E";
+            gerarLayoutImpressaoSafari(cabecalho + corpo, true);
+        }
+
+        function reimprimirFinanceiro(item) {
+            var itensStr = "";
+            if(item.itens) {
+                item.itens.forEach(function(i) {
+                    itensStr += "\x3Cdiv style=\x22display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding:10px 0;\x22\x3E\x3Cspan\x3E" + i.nome + "\x3C/span\x3E\x3Cspan\x3ER$ " + i.valor.toFixed(2) + "\x3C/span\x3E\x3C/div\x3E";
+                });
+            }
+            
+            var cabecalho = "\x3Ch2 style=\x22text-align:center; color:#FF9500; text-transform:uppercase; margin-bottom:30px;\x22\x3E" + item.tipo + "\x3C/h2\x3E" +
+                "\x3Cdiv style=\x22background:#F9F9F9; padding:15px; border-radius:10px; margin-bottom: 20px;\x22\x3E" +
+                "\x3Cp style=\x22margin: 5px 0;\x22\x3E\x3Cstrong\x3EPaciente:\x3C/strong\x3E " + document.getElementById("petNome").innerText + "\x3C/p\x3E" +
+                "\x3Cp style=\x22margin: 5px 0;\x22\x3E\x3Cstrong\x3ETutor(a):\x3C/strong\x3E " + document.getElementById("tutorNome").innerText.replace("Tutor: ", "") + "\x3C/p\x3E\x3C/div\x3E";
+            
+            var final = "\x3Cdiv style=\x22margin:30px 0;\x22\x3E" + itensStr + "\x3C/div\x3E" +
+                        "\x3Cdiv style=\x22text-align:right; font-size:20px;\x22\x3E\x3Cstrong\x3ETOTAL: R$ " + (item.total||0).toFixed(2) + "\x3C/strong\x3E\x3Cbr\x3E";
+            
+            if(item.tipo === "recibo") {
+                final += "\x3Cspan style=\x22font-size:16px; color:#34C759;\x22\x3EValor Pago: R$ " + (item.valorPago||0).toFixed(2) + "\x3C/span\x3E\x3Cbr\x3E";
+                if(item.pendencia > 0) final += "\x3Cstrong style=\x22color:#FF6B6B;\x22\x3EPendente: R$ " + item.pendencia.toFixed(2) + "\x3C/strong\x3E\x3Cbr\x3E";
+            }
+            final += "\x3C/div\x3E";
+            
+            gerarLayoutImpressaoSafari(cabecalho + final, false);
         }
 
         async function registrarFoto() {
