@@ -281,7 +281,6 @@
                         var listaNomes = item.itens ? item.itens.map(function(i){ return i.nome; }).join(", ") : "Serviços";
                         pDesc.innerHTML = "\x3Cstrong\x3ETotal: R$ " + item.total.toFixed(2) + "\x3C/strong\x3E\x3Cbr\x3E\x3Csmall\x3E" + listaNomes + "\x3C/small\x3E";
                     } else if (item.tipo === "vacina") {
-                        // O ANTIDOTO DO BUG DO UNDEFINED ESTÁ AQUI:
                         var nomeV = item.nome || item.vacina || item.descricao || item.titulo || "Vacina Registrada";
                         pDesc.innerHTML = "\x3Cstrong\x3E" + nomeV + "\x3C/strong\x3E";
                     } else {
@@ -294,13 +293,13 @@
             } catch (e) { console.error(e); }
         }
 
-        // --- SISTEMA BLINDADO DE IMPRESSÃO (CORREÇÃO SAFARI/iOS) ---
+        // --- SISTEMA BLINDADO DE IMPRESSÃO (TUDO EM PRETO + MARGENS SEGURAS) ---
         function gerarLayoutImpressaoSafari(conteudoPrincipal, mostrarAssinatura) {
             var dataFmt = new Date().toLocaleDateString("pt-BR", {timeZone: 'UTC'});
             var assHTML = "";
             if(mostrarAssinatura) {
                 var tutorTxt = document.getElementById("tutorNome").innerText.replace("Tutor: ", "");
-                assHTML = "\x3Cdiv style=\x22margin-top:60px; display:flex; justify-content:space-between;\x22\x3E" +
+                assHTML = "\x3Cdiv style=\x22margin-top:80px; display:flex; justify-content:space-between; color:#000;\x22\x3E" +
                           "\x3Cdiv style=\x22border-top:1px solid #000; width:45%; text-align:center; padding-top:10px; font-size:14px; margin-top:40px;\x22\x3EAssinatura do Tutor\x3Cbr\x3E" + tutorTxt + "\x3C/div\x3E" +
                           "\x3Cdiv style=\x22border-top:1px solid #000; width:45%; text-align:center; padding-top:10px; font-size:14px; margin-top:40px;\x22\x3EMédico(a) Veterinário(a)\x3Cbr\x3ENatalia Monteiro\x3Cbr\x3ECRMV-RJ\x3C/div\x3E\x3C/div\x3E";
             }
@@ -308,16 +307,16 @@
             var htmlArr = [
                 "\x3Chtml\x3E\x3Chead\x3E\x3Cstyle\x3E",
                 "@page { size: A4 portrait; margin: 0; }",
-                "body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }",
-                ".page-a4 { position: relative; width: 100%; min-height: 100vh; box-sizing: border-box; overflow: hidden; }",
-                ".bg-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; object-fit: cover; object-position: center top; }",
-                ".content-wrapper { position: relative; z-index: 1; padding: 160px 50px 100px 50px; color: #2D3436; font-size: 16px; line-height: 1.6; }",
+                "body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; color: #000 !important; background: #FFF; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }",
+                ".page-a4 { position: relative; width: 100%; min-height: 100vh; overflow: hidden; }",
+                ".bg-img { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; object-fit: cover; }",
+                ".content-wrapper { position: relative; z-index: 1; padding: 220px 80px 150px 80px; max-width: 800px; margin: 0 auto; color: #000; font-size: 16px; line-height: 1.6; }",
                 "\x3C/style\x3E\x3C/head\x3E\x3Cbody\x3E",
                 "\x3Cdiv class=\x22page-a4\x22\x3E",
                 "\x3Cimg src=\x22assets/receita_bg.jpg\x22 class=\x22bg-img\x22 /\x3E",
                 "\x3Cdiv class=\x22content-wrapper\x22\x3E",
                 conteudoPrincipal,
-                "\x3Cp style=\x22text-align:right; margin-top:40px; color: #555;\x22\x3EMagé, " + dataFmt + "\x3C/p\x3E",
+                "\x3Cp style=\x22text-align:right; margin-top:40px; color: #000;\x22\x3EMagé, " + dataFmt + "\x3C/p\x3E",
                 assHTML,
                 "\x3C/div\x3E\x3C/div\x3E",
                 "\x3Cscript\x3Ewindow.onload=function(){ setTimeout(function(){ window.print(); window.close(); }, 800); }\x3C/script\x3E",
@@ -382,11 +381,11 @@
             var trat = document.getElementById("inputTratamento").value;
             if(!trat) return alert("Preencha o tratamento para gerar a receita.");
             
-            var cabecalhoPaciente = "\x3Cdiv style=\x22border-bottom: 2px solid #e0c8d4; padding-bottom: 10px; margin-bottom: 20px;\x22\x3E" +
+            var cabecalhoPaciente = "\x3Cdiv style=\x22border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; color:#000;\x22\x3E" +
                 "\x3Cp style=\x22margin: 5px 0;\x22\x3E\x3Cstrong\x3EPaciente:\x3C/strong\x3E " + document.getElementById("petNome").innerText + " &nbsp;|&nbsp; \x3Cstrong\x3ERaça:\x3C/strong\x3E " + document.getElementById("petRaca").innerText + " &nbsp;|&nbsp; \x3Cstrong\x3EPeso:\x3C/strong\x3E " + document.getElementById("petPeso").innerText + "\x3C/p\x3E" +
                 "\x3Cp style=\x22margin: 5px 0;\x22\x3E\x3Cstrong\x3ETutor(a):\x3C/strong\x3E " + document.getElementById("tutorNome").innerText.replace("Tutor: ", "") + "\x3C/p\x3E\x3C/div\x3E";
             
-            var conteudo = cabecalhoPaciente + "\x3Cdiv style=\x22min-height: 400px; white-space: pre-wrap;\x22\x3E" + trat + "\x3C/div\x3E";
+            var conteudo = cabecalhoPaciente + "\x3Cdiv style=\x22min-height: 400px; white-space: pre-wrap; color:#000;\x22\x3E" + trat + "\x3C/div\x3E";
             gerarLayoutImpressaoSafari(conteudo, false);
         }
 
@@ -394,13 +393,13 @@
             var anam = document.getElementById("inputAnamnese").value;
             var trat = document.getElementById("inputTratamento").value;
             
-            var cabecalho = "\x3Ch2 style=\x22text-align:center; color:#4ECDC4; margin-bottom:30px; text-transform:uppercase;\x22\x3EFicha Clínica de Atendimento\x3C/h2\x3E" +
-                "\x3Cdiv style=\x22background:#F9F9F9; padding:15px; border-radius:10px; margin-bottom: 20px;\x22\x3E" +
+            var cabecalho = "\x3Ch2 style=\x22text-align:center; color:#000; margin-bottom:30px; text-transform:uppercase;\x22\x3EFicha Clínica de Atendimento\x3C/h2\x3E" +
+                "\x3Cdiv style=\x22border: 1px solid #000; padding:15px; border-radius:10px; margin-bottom: 20px; color:#000;\x22\x3E" +
                 "\x3Cp style=\x22margin: 5px 0;\x22\x3E\x3Cstrong\x3EPaciente:\x3C/strong\x3E " + document.getElementById("petNome").innerText + " &nbsp;|&nbsp; \x3Cstrong\x3EPeso Medido:\x3C/strong\x3E " + (document.getElementById("inputPesoConsulta").value || "--") + " kg\x3C/p\x3E" +
                 "\x3Cp style=\x22margin: 5px 0;\x22\x3E\x3Cstrong\x3ETutor(a):\x3C/strong\x3E " + document.getElementById("tutorNome").innerText.replace("Tutor: ", "") + "\x3C/p\x3E\x3C/div\x3E";
             
-            var corpoAnamnese = "\x3Ch4 style=\x22color:#FF6B6B; margin-bottom:5px;\x22\x3EAnamnese / Histórico\x3C/h4\x3E\x3Cdiv style=\x22white-space: pre-wrap; margin-bottom:20px;\x22\x3E" + (anam || "Sem registro.") + "\x3C/div\x3E";
-            var corpoTrat = "\x3Ch4 style=\x22color:#4ECDC4; margin-bottom:5px;\x22\x3EConduta / Tratamento\x3C/h4\x3E\x3Cdiv style=\x22white-space: pre-wrap; margin-bottom:20px;\x22\x3E" + (trat || "Sem prescrição.") + "\x3C/div\x3E";
+            var corpoAnamnese = "\x3Ch4 style=\x22color:#000; margin-bottom:5px; text-decoration: underline;\x22\x3EAnamnese / Histórico\x3C/h4\x3E\x3Cdiv style=\x22white-space: pre-wrap; margin-bottom:20px; color:#000;\x22\x3E" + (anam || "Sem registro.") + "\x3C/div\x3E";
+            var corpoTrat = "\x3Ch4 style=\x22color:#000; margin-bottom:5px; text-decoration: underline;\x22\x3EConduta / Tratamento\x3C/h4\x3E\x3Cdiv style=\x22white-space: pre-wrap; margin-bottom:20px; color:#000;\x22\x3E" + (trat || "Sem prescrição.") + "\x3C/div\x3E";
             
             gerarLayoutImpressaoSafari(cabecalho + corpoAnamnese + corpoTrat, true);
         }
@@ -410,7 +409,6 @@
             var dataApp = item.data ? item.data.split('T')[0].split('-').reverse().join('/') : "--";
             var dataRet = item.data_revacina ? item.data_revacina.split('-').reverse().join('/') : "Não especificada";
 
-            // A Rede de Segurança da Vacina ataca novamente aqui:
             var nomeV = item.nome || item.vacina || item.descricao || item.titulo || "Vacina Registrada";
             
             document.getElementById("vDetalheNome").innerText = nomeV;
@@ -428,25 +426,25 @@
             
             var nomeV = v.nome || v.vacina || v.descricao || v.titulo || "Vacina Registrada";
 
-            var cabecalho = "\x3Ch2 style=\x22text-align:center; color:#34C759; margin-bottom:30px; text-transform:uppercase;\x22\x3ECertificado de Vacinação\x3C/h2\x3E";
+            var cabecalho = "\x3Ch2 style=\x22text-align:center; color:#000; margin-bottom:30px; text-transform:uppercase;\x22\x3ECertificado de Vacinação\x3C/h2\x3E";
             
-            var infoHtml = "\x3Ctable style=\x22width:100%; border-collapse: collapse; margin-bottom:40px;\x22\x3E" +
-                "\x3Ctr\x3E\x3Ctd style=\x22padding:10px; border-bottom:1px solid #CCC;\x22\x3E\x3Cstrong\x3EPaciente:\x3C/strong\x3E " + document.getElementById("petNome").innerText + "\x3C/td\x3E\x3Ctd style=\x22padding:10px; border-bottom:1px solid #CCC;\x22\x3E\x3Cstrong\x3EEspécie/Raça:\x3C/strong\x3E " + document.getElementById("petRaca").innerText + "\x3C/td\x3E\x3C/tr\x3E" +
-                "\x3Ctr\x3E\x3Ctd colspan=\x222\x22 style=\x22padding:10px; border-bottom:1px solid #CCC;\x22\x3E\x3Cstrong\x3ETutor(a):\x3C/strong\x3E " + document.getElementById("tutorNome").innerText.replace("Tutor: ", "") + "\x3C/td\x3E\x3C/tr\x3E" +
+            var infoHtml = "\x3Ctable style=\x22width:100%; border-collapse: collapse; margin-bottom:40px; color:#000;\x22\x3E" +
+                "\x3Ctr\x3E\x3Ctd style=\x22padding:10px; border-bottom:1px solid #000;\x22\x3E\x3Cstrong\x3EPaciente:\x3C/strong\x3E " + document.getElementById("petNome").innerText + "\x3C/td\x3E\x3Ctd style=\x22padding:10px; border-bottom:1px solid #000;\x22\x3E\x3Cstrong\x3EEspécie/Raça:\x3C/strong\x3E " + document.getElementById("petRaca").innerText + "\x3C/td\x3E\x3C/tr\x3E" +
+                "\x3Ctr\x3E\x3Ctd colspan=\x222\x22 style=\x22padding:10px; border-bottom:1px solid #000;\x22\x3E\x3Cstrong\x3ETutor(a):\x3C/strong\x3E " + document.getElementById("tutorNome").innerText.replace("Tutor: ", "") + "\x3C/td\x3E\x3C/tr\x3E" +
                 "\x3C/table\x3E";
 
-            var destaque = "\x3Cdiv style=\x22background:#F0FFF4; padding:25px; border-radius:15px; border-left:6px solid #34C759; text-align:center;\x22\x3E" +
-                "\x3Cp style=\x22margin:0; font-size:24px; font-weight:900; color:#2D3436;\x22\x3E" + nomeV + "\x3C/p\x3E" +
+            var destaque = "\x3Cdiv style=\x22border:2px solid #000; padding:25px; border-radius:15px; text-align:center; color:#000;\x22\x3E" +
+                "\x3Cp style=\x22margin:0; font-size:24px; font-weight:900;\x22\x3E" + nomeV + "\x3C/p\x3E" +
                 "\x3Cp style=\x22margin:15px 0 0 0; font-size:18px;\x22\x3EData da Aplicação: \x3Cstrong\x3E" + dataApp + "\x3C/strong\x3E\x3C/p\x3E" +
-                "\x3Cp style=\x22margin:5px 0 0 0; font-size:18px; color:#FF6B6B;\x22\x3EPróxima Dose: \x3Cstrong\x3E" + dataRet + "\x3C/strong\x3E\x3C/p\x3E" +
+                "\x3Cp style=\x22margin:5px 0 0 0; font-size:18px;\x22\x3EPróxima Dose: \x3Cstrong\x3E" + dataRet + "\x3C/strong\x3E\x3C/p\x3E" +
                 "\x3C/div\x3E";
 
             gerarLayoutImpressaoSafari(cabecalho + infoHtml + destaque, true);
         }
 
         function reimprimirDocumento(titulo, texto, dataISO) {
-            var cabecalho = "\x3Ch2 style=\x22text-align:center; text-transform:uppercase; margin-bottom:30px; color:#4ECDC4;\x22\x3E" + titulo + "\x3C/h2\x3E";
-            var corpo = "\x3Cdiv style=\x22text-align:justify; white-space:pre-wrap;\x22\x3E" + texto + "\x3C/div\x3E";
+            var cabecalho = "\x3Ch2 style=\x22text-align:center; text-transform:uppercase; margin-bottom:30px; color:#000;\x22\x3E" + titulo + "\x3C/h2\x3E";
+            var corpo = "\x3Cdiv style=\x22text-align:justify; white-space:pre-wrap; color:#000;\x22\x3E" + texto + "\x3C/div\x3E";
             gerarLayoutImpressaoSafari(cabecalho + corpo, true);
         }
 
@@ -454,21 +452,21 @@
             var itensStr = "";
             if(item.itens) {
                 item.itens.forEach(function(i) {
-                    itensStr += "\x3Cdiv style=\x22display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding:10px 0;\x22\x3E\x3Cspan\x3E" + i.nome + "\x3C/span\x3E\x3Cspan\x3ER$ " + i.valor.toFixed(2) + "\x3C/span\x3E\x3C/div\x3E";
+                    itensStr += "\x3Cdiv style=\x22display:flex;justify-content:space-between;border-bottom:1px dashed #000;padding:10px 0; color:#000;\x22\x3E\x3Cspan\x3E" + i.nome + "\x3C/span\x3E\x3Cspan\x3ER$ " + i.valor.toFixed(2) + "\x3C/span\x3E\x3C/div\x3E";
                 });
             }
             
-            var cabecalho = "\x3Ch2 style=\x22text-align:center; color:#FF9500; text-transform:uppercase; margin-bottom:30px;\x22\x3E" + item.tipo + "\x3C/h2\x3E" +
-                "\x3Cdiv style=\x22background:#F9F9F9; padding:15px; border-radius:10px; margin-bottom: 20px;\x22\x3E" +
+            var cabecalho = "\x3Ch2 style=\x22text-align:center; color:#000; text-transform:uppercase; margin-bottom:30px;\x22\x3E" + item.tipo + "\x3C/h2\x3E" +
+                "\x3Cdiv style=\x22border: 1px solid #000; padding:15px; border-radius:10px; margin-bottom: 20px; color:#000;\x22\x3E" +
                 "\x3Cp style=\x22margin: 5px 0;\x22\x3E\x3Cstrong\x3EPaciente:\x3C/strong\x3E " + document.getElementById("petNome").innerText + "\x3C/p\x3E" +
                 "\x3Cp style=\x22margin: 5px 0;\x22\x3E\x3Cstrong\x3ETutor(a):\x3C/strong\x3E " + document.getElementById("tutorNome").innerText.replace("Tutor: ", "") + "\x3C/p\x3E\x3C/div\x3E";
             
             var final = "\x3Cdiv style=\x22margin:30px 0;\x22\x3E" + itensStr + "\x3C/div\x3E" +
-                        "\x3Cdiv style=\x22text-align:right; font-size:20px;\x22\x3E\x3Cstrong\x3ETOTAL: R$ " + (item.total||0).toFixed(2) + "\x3C/strong\x3E\x3Cbr\x3E";
+                        "\x3Cdiv style=\x22text-align:right; font-size:20px; color:#000;\x22\x3E\x3Cstrong\x3ETOTAL: R$ " + (item.total||0).toFixed(2) + "\x3C/strong\x3E\x3Cbr\x3E";
             
             if(item.tipo === "recibo") {
-                final += "\x3Cspan style=\x22font-size:16px; color:#34C759;\x22\x3EValor Pago: R$ " + (item.valorPago||0).toFixed(2) + "\x3C/span\x3E\x3Cbr\x3E";
-                if(item.pendencia > 0) final += "\x3Cstrong style=\x22color:#FF6B6B;\x22\x3EPendente: R$ " + item.pendencia.toFixed(2) + "\x3C/strong\x3E\x3Cbr\x3E";
+                final += "\x3Cspan style=\x22font-size:16px;\x22\x3EValor Pago: R$ " + (item.valorPago||0).toFixed(2) + "\x3C/span\x3E\x3Cbr\x3E";
+                if(item.pendencia > 0) final += "\x3Cstrong\x3EPendente: R$ " + item.pendencia.toFixed(2) + "\x3C/strong\x3E\x3Cbr\x3E";
             }
             final += "\x3C/div\x3E";
             
